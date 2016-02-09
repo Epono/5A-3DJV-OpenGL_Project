@@ -121,26 +121,26 @@ void InitCubemap()
 	};
 
 	static const char* skyboxFiles[] = {
-		"skybox/right.jpg",
-		"skybox/left.jpg",
-		"skybox/top.jpg",
-		"skybox/bottom.jpg",
-		"skybox/back.jpg",
-		"skybox/front.jpg",
+		//"skybox/right.jpg",
+		//"skybox/left.jpg",
+		//"skybox/top.jpg",
+		//"skybox/bottom.jpg",
+		//"skybox/back.jpg",
+		//"skybox/front.jpg",
 
-		//"skybox/Powerlines/posx.jpg",
-		//"skybox/Powerlines/negx.jpg",
-		//"skybox/Powerlines/posy.jpg",
-		//"skybox/Powerlines/negy.jpg",
-		//"skybox/Powerlines/posz.jpg",
-		//"skybox/Powerlines/negz.jpg",
+		/*"skybox/Powerlines/posx.jpg",
+		"skybox/Powerlines/negx.jpg",
+		"skybox/Powerlines/posy.jpg",
+		"skybox/Powerlines/negy.jpg",
+		"skybox/Powerlines/posz.jpg",
+		"skybox/Powerlines/negz.jpg",*/
 
-		//"skybox/Park3/posx.jpg",
-		//"skybox/Park3/negx.jpg",
-		//"skybox/Park3/posy.jpg",
-		//"skybox/Park3/negy.jpg",
-		//"skybox/Park3/posz.jpg",
-		//"skybox/Park3/negz.jpg",
+		"skybox/Park3/posx.jpg",
+		"skybox/Park3/negx.jpg",
+		"skybox/Park3/posy.jpg",
+		"skybox/Park3/negy.jpg",
+		"skybox/Park3/posz.jpg",
+		"skybox/Park3/negz.jpg",
 	};
 
 	LoadAndCreateCubeMap(skyboxFiles, g_CubeMap.textureObj);
@@ -265,7 +265,7 @@ void LoadOBJ(const std::string &inputFile, Object &object)
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	LoadAndCreateTextureRGBA(materials[0].diffuse_texname.c_str(), object.textureObj);
+	LoadAndCreateTextureRGBA("Rock-Texture-Surface.jpg", object.textureObj);
 }
 
 void CleanObjet(Object& objet)
@@ -348,7 +348,7 @@ void Initialize()
 	// Setup
 	previousTime = glutGet(GLUT_ELAPSED_TIME);
 
-	const std::string inputFile = "rock.obj";
+	const std::string inputFile = "mur.obj";
 	LoadOBJ(inputFile, g_Rock);
 
 	const std::string inputFile2 = "arrow.obj";

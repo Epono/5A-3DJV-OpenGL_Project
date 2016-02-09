@@ -42,6 +42,12 @@
     <ClCompile Include="..\Libs\tinyobjloader\tiny_obj_loader.cc">
       <Filter>Source Files\tiny_obj_loader</Filter>
     </ClCompile>
+    <ClCompile Include="Scene.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Common.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\EsgiShader.h">
@@ -62,6 +68,9 @@
     <ClInclude Include="..\Libs\tinyobjloader\tiny_obj_loader.h">
       <Filter>Source Files\tiny_obj_loader</Filter>
     </ClInclude>
+    <ClInclude Include="Scene.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="firstShader.vs">
@@ -74,6 +83,18 @@
       <Filter>Source Files\shaders</Filter>
     </None>
     <None Include="basic.vs">
+      <Filter>Source Files\shaders</Filter>
+    </None>
+    <None Include="basico.fs">
+      <Filter>Source Files\shaders</Filter>
+    </None>
+    <None Include="basico.vs">
+      <Filter>Source Files\shaders</Filter>
+    </None>
+    <None Include="yolo.fs">
+      <Filter>Source Files\shaders</Filter>
+    </None>
+    <None Include="yolo.vs">
       <Filter>Source Files\shaders</Filter>
     </None>
   </ItemGroup>

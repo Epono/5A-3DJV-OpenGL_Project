@@ -1,35 +1,6 @@
 #pragma once
 
-
-// Specifique a Windows
-//#if _WIN32
-//#include <Windows.h>
-//#define FREEGLUT_LIB_PRAGMAS 0
-//#pragma comment(lib, "freeglut.lib")
-//#pragma comment(lib, "opengl32.lib")
-//#pragma comment(lib, "glew32s.lib")
-//#endif
-
-#define GLEW_STATIC 1
-#include "GL/glew.h"
-// FreeGLUT
-//#include "GL/freeglut.h"
-
-#include <iostream>
-#include <cstdio>
-#include <cmath>
-#include <cassert>
-
-#include "../common/EsgiShader.h"
-
-#include "../Libs/glm/glm/glm.hpp"
-#include <../Libs/glm/glm/gtx/transform.hpp>
-
-#include <../Libs/glm/glm/gtc/type_ptr.hpp>
-
 #include "Common.h"
-
-#include "tinyobjloader/tiny_obj_loader.h"
 
 #include "MeshesInfo.h"
 
@@ -51,8 +22,8 @@ public:
 	
 	//pour la création du mesh
 	void InitMesh(std::string, std::string);
-	bool LoadAndCreateTextureRGBA(const char *, GLuint &);
-
+	//bool LoadAndCreateTextureRGBA(const char *, GLuint &);
+	void DisplayObj(glm::vec3 &);
 
 	float nbVertices;
 	bool Norm;
@@ -67,6 +38,8 @@ public:
 
 	GLuint FBO;
 
+
+	GLuint blockBind;
 
 	GLuint textureID;
 	GLuint textureCoord;

@@ -87,7 +87,11 @@
     <ClCompile Include="..\common\EsgiShader.cpp" />
     <ClCompile Include="..\Libs\tinyobjloader\tiny_obj_loader.cc" />
     <ClCompile Include="BasicV2.cpp" />
+    <ClCompile Include="Common.cpp" />
     <ClCompile Include="MeshObject.cpp" />
+    <ClCompile Include="Scene.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="SceneArea.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -96,13 +100,20 @@
     <ClInclude Include="Common.h" />
     <ClInclude Include="MeshesInfo.h" />
     <ClInclude Include="MeshObject.h" />
+    <ClInclude Include="Scene.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="SceneArea.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="basic.fs" />
     <None Include="basic.vs" />
+    <None Include="basico.fs" />
+    <None Include="basico.vs" />
     <None Include="firstShader.fs" />
     <None Include="firstShader.vs" />
+    <None Include="yolo.fs" />
+    <None Include="yolo.vs" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

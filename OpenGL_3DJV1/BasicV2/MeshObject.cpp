@@ -1,4 +1,4 @@
-#define STB_IMAGE_IMPLEMENTATION
+
 #include "MeshObject.h"
 
 #ifndef BUFFER_OFFSET
@@ -358,7 +358,7 @@ void MeshObject::InitMesh(std::string inputfileObj, std::string inputfileTexture
 	}
 	glBindVertexArray(0);
 }
-
+/*
 bool MeshObject::LoadAndCreateTextureRGBA(const char *filename, GLuint &texID)
 {
 	glGenTextures(1, &texID);
@@ -378,5 +378,42 @@ bool MeshObject::LoadAndCreateTextureRGBA(const char *filename, GLuint &texID)
 
 		stbi_image_free(data);
 	}
+
 	return (data != nullptr);
+}*/
+
+void MeshObject::DisplayObj(glm::vec3 &position)
+{
+	//auto width = glutGet(GLUT_WINDOW_WIDTH);
+	//auto height = glutGet(GLUT_WINDOW_HEIGHT);
+
+
+	
+
+	auto program = GetShader();
+	glUseProgram(program);
+
+	// variables uniformes (constantes) 
+
+	
+
+	auto worldLocation = glGetUniformLocation(program, "u_worldMatrix");
+
+	glm::mat4& transform = worldMatrix;
+	transform[3] = glm::vec4(position,1.0f);
+
+	glUniformMatrix4fv(worldLocation, 1, GL_FALSE, glm::value_ptr(transform));
+
+	auto textureLocation = glGetUniformLocation(program, "u_texture");
+	glUniform1i(textureLocation, 0);
+
+	glBindVertexArray(VAO);
+	glBindVertexArray(IBO);
+	glBindTexture(GL_TEXTURE_2D, textureID);
+	glDrawElements(GL_TRIANGLES, ElementCount, GL_UNSIGNED_INT, 0);
+
+	glBindVertexArray(0);
+
+	
+
 }
