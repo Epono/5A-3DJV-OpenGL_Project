@@ -10,12 +10,8 @@
 
 MeshObject::MeshObject()
 {
-	projectionview = glm::perspective(70.0, (double)800 / 600, 1.0, 100.0);
-
-	modelview = glm::mat4(1.0f);
-	modelview = glm::lookAt(glm::vec3(3, 3, 3), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
-
-	//camview = glm::lookAt(glm::vec3(3, 3, 3), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));*/
+	Norm = false;
+	TextureCoord = false;
 }
 
 
@@ -40,10 +36,6 @@ void LoadVBO(const float(&vertices) [N])
 void MeshObject::CreateVBO()
 {
 		
-	
-		
-
-
 
 		glGenBuffers(1, &VBO);
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -78,15 +70,6 @@ void MeshObject::CreateVBO()
 
 void MeshObject::CreateVBOGround()
 {
-
-
-	/*
-	projectionview = glm::perspective(70.0, (double)800 / 600, 1.0, 100.0);
-
-	modelview = glm::mat4(1.0f);
-
-	camview = glm::lookAt(glm::vec3(3, 3, 3), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
-	*/
 
 
 
@@ -127,10 +110,7 @@ void MeshObject::Display()
 
 	glBindVertexArray(VAO);
 
-
 	
-
-
 	
 	
 	/*
@@ -170,10 +150,7 @@ void MeshObject::DisplayNoText(glm::mat4 &projectionView, glm::mat4 &modelView)
 
 
 
-
-
-
-
+	
 	/*
 	float angle = 0.0f;
 
@@ -185,6 +162,7 @@ void MeshObject::DisplayNoText(glm::mat4 &projectionView, glm::mat4 &modelView)
 
 	modelview = glm::rotate(modelview, angle, glm::vec3(0, 1, 0));
 	*/
+
 	GLuint model = glGetUniformLocation(sceneShader.GetProgram(), "u_modelviewMatrix");
 	glUniformMatrix4fv(model, 1, GL_FALSE, value_ptr(modelView));
 
@@ -250,4 +228,155 @@ void MeshObject::InitShader(std::string shaderName)
 	sceneShader.LoadFragmentShader(fsShader.c_str());
 	sceneShader.Create();
 
+}
+
+GLuint MeshObject::GetShader()
+{
+	return sceneShader.GetProgram();
+}
+
+void MeshObject::InitMesh(std::string inputfileObj, std::string inputfileTexture)
+{
+
+	std::string inputfile = inputfileObj;
+	std::vector<tinyobj::shape_t> shapes;
+	std::vector<tinyobj::material_t> materials;
+
+	std::string err = tinyobj::LoadObj(shapes, materials, inputfile.c_str());
+
+	if (!err.empty())
+	{
+		std::cout << err << std::endl;
+		std::cin.ignore();
+		exit(-1);
+	}
+	else
+		std::cout << "Chargement de l'objet reussi !" << std::endl;
+
+	const std::vector<unsigned int>& indices = shapes[0].mesh.indices;
+	const std::vector<float>& positions = shapes[0].mesh.positions;
+	const std::vector<float>& normals = shapes[0].mesh.normals;
+	const std::vector<float>& texcoords = shapes[0].mesh.texcoords;
+
+	int nbElement = positions.size();
+
+	if (normals.size() > 0)
+	{
+		nbElement += normals.size();
+		Norm = true;
+		std::cout << "Ajout des infos sur la présence des normales" << std::endl;
+	}
+	else
+		std::cout << "Aucune normales " << std::endl;
+
+	if (texcoords.size() > 0)
+	{
+		if (LoadAndCreateTextureRGBA(inputfileTexture.c_str(), textureID) == false)
+		{
+			std::cout << "Erreur dans le chargement de la texture !" << std::endl;
+			std::cin.ignore();
+			exit(-1);
+		}
+		else
+		{
+			nbElement += texcoords.size();
+			TextureCoord = true;
+
+			std::cout << "Chargement de la texture reussi !" << std::endl;
+		}
+	}
+	else
+		std::cout << "Le fichier ne contient pas de texCoord" << std::endl;
+
+	position = glm::vec3(0.f, 0.f, 20.f);
+	ElementCount = indices.size();
+
+	// VBO
+	glGenBuffers(1, &VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, (sizeof(float) * nbElement), NULL, GL_STATIC_DRAW);
+
+	float* vbo_buffer = static_cast<float*>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
+	int vbo_Vertex = 0;
+	int vbo_Normals = 0;
+	int vbo_TexCoords = 0;
+	int it = 0;
+
+	for (int i = 0; i < nbElement; ++i)
+	{
+		if (it >= 8)
+		{
+			it = 0;
+		}
+		if (it >= 0 && it <= 2)
+		{
+			vbo_buffer[i] = positions[vbo_Vertex];
+			vbo_Vertex++;
+		}
+		if (Norm && (it >= 3 && it <= 5))
+		{
+			vbo_buffer[i] = normals[vbo_Normals];
+			vbo_Normals++;
+		}
+		if (TextureCoord && (it >= 6 && it <= 7))
+		{
+			vbo_buffer[i] = texcoords[vbo_TexCoords];
+			vbo_TexCoords++;
+		}
+		it++;
+	}
+
+	glUnmapBuffer(GL_ARRAY_BUFFER);
+
+	// IBO
+	glGenBuffers(1, &IBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * ElementCount, &indices[0], GL_STATIC_DRAW);
+
+	glBindVertexArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	// VAO
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 8, 0);
+	int stride = (3 + (Norm * 3) + (TextureCoord * 2))*sizeof(float);
+	int offset = 3 * sizeof(float);
+	if (Norm)
+	{
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, (void*)offset);
+		offset += sizeof(float) * 3;
+	}
+	if (TextureCoord)
+	{
+		glEnableVertexAttribArray(2);
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, (void*)offset);
+	}
+	glBindVertexArray(0);
+}
+
+bool MeshObject::LoadAndCreateTextureRGBA(const char *filename, GLuint &texID)
+{
+	glGenTextures(1, &texID);
+	glBindTexture(GL_TEXTURE_2D, texID);
+
+	// il est obligatoire de specifier une valeur pour GL_TEXTURE_MIN_FILTER
+	// autrement le Texture Object est considere comme invalide
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	int w, h;
+	uint8_t *data = stbi_load(filename, &w, &h, nullptr, STBI_rgb_alpha);
+	if (data) {
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+
+		stbi_image_free(data);
+	}
+	return (data != nullptr);
 }

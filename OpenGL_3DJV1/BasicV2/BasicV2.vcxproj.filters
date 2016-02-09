@@ -19,6 +19,9 @@
     <Filter Include="Source Files\shaders">
       <UniqueIdentifier>{c89e00ad-36cc-4a43-9f57-622c7e123116}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\tiny_obj_loader">
+      <UniqueIdentifier>{446b20b2-e493-439c-9546-c3674bb8a423}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -36,6 +39,9 @@
     <ClCompile Include="SceneArea.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\Libs\tinyobjloader\tiny_obj_loader.cc">
+      <Filter>Source Files\tiny_obj_loader</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\EsgiShader.h">
@@ -52,6 +58,9 @@
     </ClInclude>
     <ClInclude Include="SceneArea.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Libs\tinyobjloader\tiny_obj_loader.h">
+      <Filter>Source Files\tiny_obj_loader</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

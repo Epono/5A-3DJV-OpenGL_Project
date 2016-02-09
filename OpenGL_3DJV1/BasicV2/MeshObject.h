@@ -29,7 +29,7 @@
 
 #include "Common.h"
 
-#include "../common/tiny_obj_loader.h"
+#include "tinyobjloader/tiny_obj_loader.h"
 
 #include "MeshesInfo.h"
 
@@ -43,13 +43,20 @@ public:
 	void Display();
 	void DisplayNoText(glm::mat4 &,glm::mat4 &);
 	void InitText(std::string);
+	GLuint GetShader();
 	void Update();
 	void Translate(glm::vec3);
 	void InitShader(std::string);
 	void Destroy();
+	
+	//pour la création du mesh
+	void InitMesh(std::string, std::string);
+	bool LoadAndCreateTextureRGBA(const char *, GLuint &);
+
 
 	float nbVertices;
-
+	bool Norm;
+	bool TextureCoord;
 
 
 	GLuint VBO;
@@ -62,10 +69,16 @@ public:
 
 
 	GLuint textureID;
+	GLuint textureCoord;
+
+	GLuint ElementCount;
+	glm::vec3 position;
 
 	glm::mat4 modelview;
 	glm::mat4 projectionview;
 	glm::mat4 camview;
+
+	glm::mat4 worldMatrix;
 
 	EsgiShader sceneShader;
 	EsgiShader objShader;

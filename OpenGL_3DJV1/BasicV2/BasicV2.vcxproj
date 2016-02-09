@@ -85,12 +85,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\common\EsgiShader.cpp" />
+    <ClCompile Include="..\Libs\tinyobjloader\tiny_obj_loader.cc" />
     <ClCompile Include="BasicV2.cpp" />
     <ClCompile Include="MeshObject.cpp" />
     <ClCompile Include="SceneArea.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\EsgiShader.h" />
+    <ClInclude Include="..\Libs\tinyobjloader\tiny_obj_loader.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="MeshesInfo.h" />
     <ClInclude Include="MeshObject.h" />

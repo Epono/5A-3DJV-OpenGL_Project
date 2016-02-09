@@ -99,7 +99,7 @@ bool LoadAndCreateTextureRGBA(const char *filename, GLuint &texID)
 
 void InitCube()
 {	
-	std::string inputfile = "bear-obj.obj";
+	std::string inputfile = "Laptop_High-Polay_HP_BI_2_obj.obj";
 	std::vector<tinyobj::shape_t> shapes;
 	std::vector<tinyobj::material_t> materials;
 
@@ -132,7 +132,7 @@ void InitCube()
 
 	if (texcoords.size() > 0)
 	{
-		if (LoadAndCreateTextureRGBA("bear.tga", g_Cube.textureObj) == false)
+		if (LoadAndCreateTextureRGBA("Bake_Col_3.jpg", g_Cube.textureObj) == false)
 		{
 			std::cout << "Erreur dans le chargement de la texture !" << std::endl;
 			std::cin.ignore();
@@ -257,7 +257,7 @@ void Initialize()
 	basicShader.LoadFragmentShader("basic.fs");
 	basicShader.Create();
 
-	auto program = basicShader.GetProgram();
+	//auto program = basicShader.GetProgram();
 
 	// UN UBO SERAIT UTILE ICI
 	auto basicProgram = basicShader.GetProgram();
@@ -310,7 +310,7 @@ void Update() {
 	auto elapsedTime = delta / 1000.0f;
 	g_Cube.rotation += glm::vec3(36.0f * elapsedTime);
 
-	//g_Camera.rotation.y += 50.f * elapsedTime;
+	g_Camera.rotation.y += 50.f * elapsedTime;
 
 	glutPostRedisplay();
 }

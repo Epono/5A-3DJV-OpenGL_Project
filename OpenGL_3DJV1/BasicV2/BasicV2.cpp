@@ -29,10 +29,12 @@
 #include <glm/glm/gtx/transform.hpp>
 
 #include <glm/glm/gtc/type_ptr.hpp>
+#include "glm/gtx/euler_angles.hpp"
+
 
 #include "Common.h"
 
-#include "../common/tiny_obj_loader.h"
+#include "tinyobjloader/tiny_obj_loader.h"
 
 #include "MeshObject.h"
 
@@ -52,111 +54,6 @@ glm::mat4 projectionview;
 glm::mat4 camview;
 GLuint textureID;
 
-/*static const float vertices[] = { -1.0, -1.0, -1.0,   1.0, -1.0, -1.0,   1.0, 1.0, -1.0,     // Face 1
--1.0, -1.0, -1.0,   -1.0, 1.0, -1.0,   1.0, 1.0, -1.0,     // Face 1
-
-1.0, -1.0, 1.0,   1.0, -1.0, -1.0,   1.0, 1.0, -1.0,       // Face 2
-1.0, -1.0, 1.0,   1.0, 1.0, 1.0,   1.0, 1.0, -1.0,         // Face 2
-
--1.0, -1.0, 1.0,   1.0, -1.0, 1.0,   1.0, -1.0, -1.0,      // Face 3
--1.0, -1.0, 1.0,   -1.0, -1.0, -1.0,   1.0, -1.0, -1.0,    // Face 3
-
--1.0, -1.0, 1.0,   1.0, -1.0, 1.0,   1.0, 1.0, 1.0,        // Face 4
--1.0, -1.0, 1.0,   -1.0, 1.0, 1.0,   1.0, 1.0, 1.0,        // Face 4
-
--1.0, -1.0, -1.0,   -1.0, -1.0, 1.0,   -1.0, 1.0, 1.0,     // Face 5
--1.0, -1.0, -1.0,   -1.0, 1.0, -1.0,   -1.0, 1.0, 1.0,     // Face 5
-
--1.0, 1.0, 1.0,   1.0, 1.0, 1.0,   1.0, 1.0, -1.0,         // Face 6
--1.0, 1.0, 1.0,   -1.0, 1.0, -1.0,   1.0, 1.0, -1.0 };      // Face 6
-
-static const float couleurs[] = { 1.0, 0.0, 0.0,   1.0, 0.0, 0.0,   1.0, 0.0, 0.0,           // Face 1
-1.0, 0.0, 0.0,   1.0, 0.0, 0.0,   1.0, 0.0, 0.0,           // Face 1
-
-0.0, 1.0, 0.0,   0.0, 1.0, 0.0,   0.0, 1.0, 0.0,           // Face 2
-0.0, 1.0, 0.0,   0.0, 1.0, 0.0,   0.0, 1.0, 0.0,           // Face 2
-
-0.0, 0.0, 1.0,   0.0, 0.0, 1.0,   0.0, 0.0, 1.0,           // Face 3
-0.0, 0.0, 1.0,   0.0, 0.0, 1.0,   0.0, 0.0, 1.0,           // Face 3
-
-1.0, 0.0, 0.0,   1.0, 0.0, 0.0,   1.0, 0.0, 0.0,           // Face 4
-1.0, 0.0, 0.0,   1.0, 0.0, 0.0,   1.0, 0.0, 0.0,           // Face 4
-
-0.0, 1.0, 0.0,   0.0, 1.0, 0.0,   0.0, 1.0, 0.0,           // Face 5
-0.0, 1.0, 0.0,   0.0, 1.0, 0.0,   0.0, 1.0, 0.0,           // Face 5
-
-0.0, 0.0, 1.0,   0.0, 0.0, 1.0,   0.0, 0.0, 1.0,           // Face 6
-0.0, 0.0, 1.0,   0.0, 0.0, 1.0,   0.0, 0.0, 1.0 };          // Face 6
-
-static const float UV[] = {
-
-	0.0f, 0.0f,
-
-	1.0f,0.0f,
-
-	1.0f, 1.0f,
-
-	0.0f,0.0f,
-	0.0f,1.0f,
-	1.0f,1.0f,
-
-	0.0f, 0.0f,
-
-	1.0f,0.0f,
-
-	1.0f, 1.0f,
-
-	0.0f,0.0f,
-	0.0f,1.0f,
-	1.0f,1.0f,
-
-	0.0f, 0.0f,
-
-	1.0f,0.0f,
-
-	1.0f, 1.0f,
-
-	0.0f,0.0f,
-	0.0f,1.0f,
-	1.0f,1.0f,
-
-	0.0f, 0.0f,
-
-	1.0f,0.0f,
-
-	1.0f, 1.0f,
-
-	0.0f,0.0f,
-	0.0f,1.0f,
-	1.0f,1.0f,
-
-	0.0f, 0.0f,
-
-	1.0f,0.0f,
-
-	1.0f, 1.0f,
-
-	0.0f,0.0f,
-	0.0f,1.0f,
-	1.0f,1.0f,
-
-	0.0f, 0.0f,
-
-	1.0f,0.0f,
-
-	1.0f, 1.0f,
-
-	0.0f,0.0f,
-	0.0f,1.0f,
-	1.0f,1.0f
-
-};*/
-
-
-
-
-
-
 
 MeshObject aCube;
 MeshObject bCube;
@@ -164,6 +61,19 @@ MeshObject sphere;
 MeshObject character;
 MeshObject ground;
 
+int previousTime = 0;
+
+void KeyboardInput(unsigned char key, int x , int y);
+
+struct ViewProj
+{
+	glm::mat4 viewMatrix;
+	glm::mat4 projectionMatrix;
+	glm::vec3 rotation;
+	glm::vec4 position;
+	glm::vec3 translation;
+	GLuint UBO;
+} g_Camera;
 
  void Initialize()
 {
@@ -173,7 +83,7 @@ MeshObject ground;
 	int numExtensions;
 	glGetIntegerv(GL_NUM_EXTENSIONS, &numExtensions);
 	
-	//glGetStringi = (PFNGLGETSTRINGIPROC)glutGetProcAddress("glGetStringi");
+	
 	
 	/*
 	for (int index = 0; index < numExtensions; ++index)
@@ -181,18 +91,50 @@ MeshObject ground;
 		printf("Extension[%d] : %s\n", index, glGetStringi(GL_EXTENSIONS, index));
 	}*/
 
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_CULL_FACE);
+	//glEnable(GL_DEPTH_TEST);
+	//glEnable(GL_CULL_FACE);
+	
 	GLenum init = glewInit();
 	if (init != GL_NO_ERROR)
 	{
 
 	}
 
-	//creationVBO
 	
+	//test Obj load
+	
+	character.InitShader("basico");
+	auto basicProgram = character.GetShader();
+
+
 	
 
+	auto blockIndex = glGetUniformBlockIndex(basicProgram, "ViewProj");
+	GLuint id_blockBind = 1;
+
+	glGenBuffers(1, &g_Camera.UBO);
+	glBindBuffer(GL_UNIFORM_BUFFER, g_Camera.UBO);
+	glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4) * 2, NULL, GL_STREAM_DRAW);
+	glBindBufferBase(GL_UNIFORM_BUFFER, id_blockBind, g_Camera.UBO);
+
+	glUniformBlockBinding(basicProgram, blockIndex, id_blockBind);
+
+	previousTime = glutGet(GLUT_ELAPSED_TIME);
+
+	character.InitMesh("bear-obj.obj", "bear.tga");
+	//sphere.InitMesh("bear-obj.obj", "bear.tga");
+	glBindVertexArray(character.VAO);
+	glBindVertexArray(character.IBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, character.IBO);
+	
+	
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
+	glEnable(GL_CULL_FACE);
+	
+	//creationVBO
+		
+	g_Camera.translation = glm::vec3(0, 0, 0);
 
 	/*aCube.CreateVBO();
 	aCube.InitText("assets/crate12.jpg");
@@ -204,9 +146,9 @@ MeshObject ground;
 	//bCube.Update();
 
 
-	ground.CreateVBOGround();
-	ground.InitText("assets/floor022.jpg");
-	ground.InitShader("basic");
+	//ground.CreateVBOGround();
+	//ground.InitText("assets/floor022.jpg");
+	//ground.InitShader("basic");
 	//ground.Translate(glm::vec3(-2.0f, 0.0f, -2.0f));
 	
 }
@@ -214,15 +156,15 @@ MeshObject ground;
 void Render()
 {
 	glViewport(0, 0, glutGet(GLUT_WINDOW_WIDTH), glutGet(GLUT_WINDOW_HEIGHT));
-	glClearColor(0.f, 0.0f, 0.0f, 1.0f);
+	glClearColor(1.f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	
+	auto width = glutGet(GLUT_WINDOW_WIDTH);
+	auto height = glutGet(GLUT_WINDOW_HEIGHT);
 
 	
-	//GLuint program = sceneShader.GetProgram();
-	//glUseProgram(program);
-
+	
+	/*
 	projectionview = glm::perspective(70.0, (double)800 / 600, 1.0, 100.0);
 
 	modelview = glm::mat4(1.0f);
@@ -230,31 +172,46 @@ void Render()
 
 	glm::mat4 saveModelView = modelview;
 
-	//GLuint program = sceneShader.GetProgram();
-	//glUseProgram(program);
-
-
-	/*
-	angle += 0.004f;
-	if (angle >= 360.0f)
-	{
-	angle -= 360.0f;
-	}
 	
-	modelview = glm::rotate(modelview, angle, glm::vec3(0, 1, 0));*/
-	/*
-	aCube.DisplayNoText(projectionview, modelview);
+	
+	ground.DisplayNoText(projectionview, modelview);
 
-	modelview = saveModelView;
-
-
-	modelview = glm::translate(modelview,glm::vec3(3.0f, 0.0f, 0.0f));
-
-
-	bCube.DisplayNoText(projectionview, modelview);
 	*/
 
-	ground.DisplayNoText(projectionview, modelview);
+	auto program = character.GetShader();
+	glUseProgram(program);
+
+	// variables uniformes (constantes) 
+
+	g_Camera.projectionMatrix = glm::perspectiveFov(45.f, (float)width, (float)height, 0.1f, 1000.f);
+	// rotation orbitale de la camera
+	float rotY = glm::radians(g_Camera.rotation.y);
+	g_Camera.position = glm::eulerAngleY(rotY) * glm::vec4(0.0f, 20.0f, 50.0f, 1.0f);
+	g_Camera.viewMatrix = glm::lookAt(glm::vec3(g_Camera.position), glm::vec3(0.f), glm::vec3(0.f, 1.f, 0.f));
+	g_Camera.viewMatrix = glm::translate(g_Camera.viewMatrix, g_Camera.translation);
+	// IL FAUT TRANSFERER LES MATRICES VIEW ET PROJ AU SHADER
+	glBindBuffer(GL_UNIFORM_BUFFER, g_Camera.UBO);
+	glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4) * 2, glm::value_ptr(g_Camera.viewMatrix), GL_STREAM_DRAW);
+
+	auto worldLocation = glGetUniformLocation(program, "u_worldMatrix");
+
+	glm::mat4& transform = character.worldMatrix;
+	transform[3] = glm::vec4(0.f, 0.f, 0.f, 1.0f);
+	glUniformMatrix4fv(worldLocation, 1, GL_FALSE, glm::value_ptr(transform));
+
+
+	glBindVertexArray(character.VAO);
+	glBindVertexArray(character.IBO);
+
+	auto textureLocation = glGetUniformLocation(program, "u_texture");
+	glUniform1i(textureLocation, 0);
+
+	glDrawElements(GL_TRIANGLES, character.ElementCount, GL_UNSIGNED_INT, 0);
+	glBindVertexArray(0);
+
+
+
+
 	glutSwapBuffers();
 	glutPostRedisplay();
 }
@@ -265,6 +222,7 @@ int main(int argc, char* argv[])
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);
 	glutInitWindowSize(800, 600);
 	glutCreateWindow("Basic");
+	glutKeyboardFunc(KeyboardInput);
 
 #ifdef FREEGLUT
 	// Note: glutSetOption n'est disponible qu'avec freeGLUT
@@ -281,3 +239,39 @@ int main(int argc, char* argv[])
 	return 0;
 }
 
+void KeyboardInput(unsigned char key, int x, int y)
+{
+	switch (key)
+	{
+		case 'z':
+		{
+			g_Camera.translation += glm::vec3(0, 0, 1);
+			break;
+		}
+		case 's':
+		{
+			g_Camera.translation += glm::vec3(0, 0, -1);
+			break;
+		}
+		case 'q':
+		{
+			g_Camera.translation += glm::vec3(1, 0, 0);
+			break;
+		}
+		case 'd':
+		{
+			g_Camera.translation += glm::vec3(-1, 0, 0);
+			break;
+		}
+		case 'e':
+		{
+			g_Camera.rotation.y += -1;
+			break;
+		}
+		case 'a':
+		{
+			g_Camera.rotation.y += 1;
+			break;
+		}
+	}
+}
