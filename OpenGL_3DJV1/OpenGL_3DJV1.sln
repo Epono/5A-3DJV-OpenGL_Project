@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.23107.0
+VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Basic", "Basic\Basic.vcxproj", "{B274856D-6B3B-426E-85C6-D2171C8D8234}"
 EndProject
@@ -28,6 +28,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MultiplePointLightsDeferredFinal", "MultiplePointLightsDeferredFinal\MultiplePointLightsDeferredFinal.vcxproj", "{2A5CB96D-5A39-4102-8D58-B81201C1A781}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ObjLoad", "ObjLoad\ObjLoad.vcxproj", "{0E85F7AB-0C21-484A-BDEC-700536C138AF}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MainScene", "MainScene\MainScene.vcxproj", "{91E3A22E-97AA-4656-BF16-29D3BE5F54C6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -87,6 +89,10 @@ Global
 		{0E85F7AB-0C21-484A-BDEC-700536C138AF}.Debug|Win32.Build.0 = Debug|Win32
 		{0E85F7AB-0C21-484A-BDEC-700536C138AF}.Release|Win32.ActiveCfg = Release|Win32
 		{0E85F7AB-0C21-484A-BDEC-700536C138AF}.Release|Win32.Build.0 = Release|Win32
+		{91E3A22E-97AA-4656-BF16-29D3BE5F54C6}.Debug|Win32.ActiveCfg = Debug|Win32
+		{91E3A22E-97AA-4656-BF16-29D3BE5F54C6}.Debug|Win32.Build.0 = Debug|Win32
+		{91E3A22E-97AA-4656-BF16-29D3BE5F54C6}.Release|Win32.ActiveCfg = Release|Win32
+		{91E3A22E-97AA-4656-BF16-29D3BE5F54C6}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
