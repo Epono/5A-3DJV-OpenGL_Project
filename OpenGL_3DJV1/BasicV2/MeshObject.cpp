@@ -228,6 +228,8 @@ void MeshObject::InitShader(std::string shaderName)
 	sceneShader.LoadFragmentShader(fsShader.c_str());
 	sceneShader.Create();
 
+	std::cout << "LES SHADER ON LES A : " << shaderName << std::endl;
+
 }
 
 GLuint MeshObject::GetShader()
@@ -416,4 +418,40 @@ void MeshObject::DisplayObj(glm::vec3 &position)
 
 	
 
+}
+
+void MeshObject::BindingForInit()
+{
+	glBindVertexArray(VAO);
+	glBindVertexArray(IBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
+}
+
+void MeshObject::CreateFBO(int width, int height)
+{
+	glGenTextures(1, &textureID);
+	glBindTexture(GL_TEXTURE_2D, textureID);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height
+		, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // GL_NEAREST
+																	  //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); 
+																	  //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); 
+																	  //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); 
+
+	glGenFramebuffers(1, &sceneFBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, sceneFBO);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0
+		, GL_TEXTURE_2D, textureID, 0);
+
+	//GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT
+	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	assert(status == GL_FRAMEBUFFER_COMPLETE);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void MeshObject::DestroyFBO()
+{
+	glDeleteFramebuffers(1, &sceneFBO);
+	glDeleteTextures(1, &textureID);
 }

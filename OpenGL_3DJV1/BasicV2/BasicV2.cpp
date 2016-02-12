@@ -21,6 +21,17 @@ glm::mat4 projectionview;
 glm::mat4 camview;
 GLuint textureID;
 
+//Liste des objets present dans la scene
+MeshObject babyCube;
+MeshObject plane;
+MeshObject desk;
+MeshObject bed;
+
+MeshObject CubeMap;
+
+MeshObject ShadowMap;
+
+
 MeshObject aCube;
 MeshObject bCube;
 MeshObject sphere;
@@ -59,6 +70,115 @@ struct ViewProj
 	GLuint UBO;
 } g_Camera;
 
+void InitCubemap()
+{
+	static const float skyboxVertices[] = {
+		-1.0f,  1.0f, -1.0f,
+		-1.0f, -1.0f, -1.0f,
+		1.0f, -1.0f, -1.0f,
+		1.0f, -1.0f, -1.0f,
+		1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+
+		-1.0f, -1.0f,  1.0f,
+		-1.0f, -1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f,  1.0f,
+		-1.0f, -1.0f,  1.0f,
+
+		1.0f, -1.0f, -1.0f,
+		1.0f, -1.0f,  1.0f,
+		1.0f,  1.0f,  1.0f,
+		1.0f,  1.0f,  1.0f,
+		1.0f,  1.0f, -1.0f,
+		1.0f, -1.0f, -1.0f,
+
+		-1.0f, -1.0f,  1.0f,
+		-1.0f,  1.0f,  1.0f,
+		1.0f,  1.0f,  1.0f,
+		1.0f,  1.0f,  1.0f,
+		1.0f, -1.0f,  1.0f,
+		-1.0f, -1.0f,  1.0f,
+
+		-1.0f,  1.0f, -1.0f,
+		1.0f,  1.0f, -1.0f,
+		1.0f,  1.0f,  1.0f,
+		1.0f,  1.0f,  1.0f,
+		-1.0f,  1.0f,  1.0f,
+		-1.0f,  1.0f, -1.0f,
+
+		-1.0f, -1.0f, -1.0f,
+		-1.0f, -1.0f,  1.0f,
+		1.0f, -1.0f, -1.0f,
+		1.0f, -1.0f, -1.0f,
+		-1.0f, -1.0f,  1.0f,
+		1.0f, -1.0f,  1.0f
+	};
+
+	static const char* skyboxFiles[] = {
+		"skybox/right.jpg",
+		"skybox/left.jpg",
+		"skybox/top.jpg",
+		"skybox/bottom.jpg",
+		"skybox/back.jpg",
+		"skybox/front.jpg",
+
+		/*"skybox/Powerlines/posx.jpg",
+		"skybox/Powerlines/negx.jpg",
+		"skybox/Powerlines/posy.jpg",
+		"skybox/Powerlines/negy.jpg",
+		"skybox/Powerlines/posz.jpg",
+		"skybox/Powerlines/negz.jpg",*/
+
+		/*"skybox/Park3/posx.jpg",
+		"skybox/Park3/negx.jpg",
+		"skybox/Park3/posy.jpg",
+		"skybox/Park3/negy.jpg",
+		"skybox/Park3/posz.jpg",
+		"skybox/Park3/negz.jpg",*/
+	};
+
+	LoadAndCreateCubeMap(skyboxFiles, CubeMap.textureID);
+
+	glGenVertexArrays(1, &CubeMap.VAO);
+	glGenBuffers(1, &CubeMap.VBO);
+	glBindVertexArray(CubeMap.VAO);
+	glBindBuffer(GL_ARRAY_BUFFER, CubeMap.VBO);
+
+	// RAPPEL: sizeof(skyboxVertices) fonctionne -cad qu'on obtient la taille totale du tableau-
+	//			du fait que skyboxVertices est un tableau STATIC et donc que le compilateur peut deduire
+	//			sa taille lors de la compilation. Autrement sizeof aurait du renvoyer la taille du pointeur.
+	glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), skyboxVertices, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+	glBindVertexArray(0);
+
+	CubeMap.InitShader("skybox");
+	//g_SkyboxShader.LoadVertexShader("skybox.vs");
+	//g_SkyboxShader.LoadFragmentShader("skybox.fs");
+	//g_SkyboxShader.Create();
+
+	auto program = CubeMap.GetShader();
+	glUseProgram(program);
+
+	// l'UBO binde en 0 sera egalement connecte au shader skybox
+	auto blockIndex = glGetUniformBlockIndex(program, "ViewProj");
+	glUniformBlockBinding(program, blockIndex, 0);
+	auto cubemapIndex = glGetUniformLocation(program, "u_CubeMap");
+
+	// pour le shader, la skybox utilisera l'unite de texture 0 mais il est possible d'utiliser 
+	// un index specifique pour la cubemap
+	glUniform1i(cubemapIndex, 0);
+	glUseProgram(0);
+}
+
+
+
+
+
+
+
 void Initialize()
 {
 	printf("Version Pilote OpenGL : %s\n", glGetString(GL_VERSION));
@@ -74,6 +194,9 @@ void Initialize()
 
 	}
 
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
+	glEnable(GL_CULL_FACE);
 	
 	/////////////////////SCENE INIT////////////////////
 	glGenBuffers(1, &Material::UBO);
@@ -83,11 +206,11 @@ void Initialize()
 	LoadMesh(g_WallMesh, g_Room);
 
 
-	LoadAndCreateTextureRGBA("wall_color_map.jpg", g_Walls.textures[Walls::gWallTexture]);
+	LoadAndCreateTextureRGBA("parquet22.jpg", g_Walls.textures[Walls::gWallTexture]);
 	glBindTexture(GL_TEXTURE_2D, g_Walls.textures[Walls::gWallTexture]);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	LoadAndCreateTextureRGBA("floor_color_map.jpg", g_Walls.textures[Walls::gFloorTexture]);
+	LoadAndCreateTextureRGBA("floor111.jpg", g_Walls.textures[Walls::gFloorTexture]);
 	glBindTexture(GL_TEXTURE_2D, g_Walls.textures[Walls::gFloorTexture]);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -127,32 +250,29 @@ void Initialize()
 
 	previousTime = glutGet(GLUT_ELAPSED_TIME);
 
-	character.InitMesh("bear-obj.obj", "bear.tga");
+	character.InitMesh("assets/obj/bear-obj.obj", "assets/obj/bear.tga");
 	sphere.InitMesh("rock.obj", "Rock-Texture-Surface.jpg");
 
-	glBindVertexArray(character.VAO);
+	character.BindingForInit();
+	sphere.BindingForInit();
+	
+	//EST remplacé par les deux lignes au dessus
+	/*glBindVertexArray(character.VAO);
 	glBindVertexArray(character.IBO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, character.IBO);
 	
 	glBindVertexArray(sphere.VAO);
 	glBindVertexArray(sphere.IBO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, sphere.IBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, sphere.IBO);*/
 	
+	
+
 	glBindVertexArray(0);
 	
+	Scene.CreateFBO(800, 600);
 
 
-
-
-
-
-
-
-
-
-	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LESS);
-	glEnable(GL_CULL_FACE);
+	InitCubemap();
 
 	//creationVBO
 
@@ -161,6 +281,33 @@ void Initialize()
 
 void Render()
 {
+	////TEST FBO ////
+	glBindFramebuffer(GL_FRAMEBUFFER, Scene.sceneFBO);
+	glViewport(0, 0, glutGet(GLUT_WINDOW_WIDTH), glutGet(GLUT_WINDOW_HEIGHT));
+	glClearColor(1.f, 0.0f, 0.5f, 1.0f);
+	glClearDepth(1.F);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	GLuint program = Scene.GetShader();
+	glUseProgram(program);
+
+	auto startIndex = 6;
+	glBindTexture(GL_TEXTURE_2D, g_Walls.textures[Walls::gWallTexture]);
+	glDrawArrays(GL_TRIANGLES, startIndex, 6 * 3);
+	startIndex += 6 * 3;	// 4 murs
+	glBindTexture(GL_TEXTURE_2D, g_Walls.textures[Walls::gCeilingTexture]);
+	glDrawArrays(GL_TRIANGLES, startIndex, 6);
+	startIndex += 6;	// plafond
+	glBindTexture(GL_TEXTURE_2D, g_Walls.textures[Walls::gFloorTexture]);
+	glDrawArrays(GL_TRIANGLES, startIndex, 6);
+	startIndex += 6;
+
+	glUseProgram(0);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	////TEST FBO////
+
 	glViewport(0, 0, glutGet(GLUT_WINDOW_WIDTH), glutGet(GLUT_WINDOW_HEIGHT));
 	glClearColor(1.f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -177,21 +324,47 @@ void Render()
 	// IL FAUT TRANSFERER LES MATRICES VIEW ET PROJ AU SHADER
 	glBindBuffer(GL_UNIFORM_BUFFER, g_Camera.UBO);
 	glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4) * 2, glm::value_ptr(g_Camera.viewMatrix), GL_STREAM_DRAW);
+	//glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4) * 2, glm::value_ptr(g_Camera.viewMatrix));
 
+	glUseProgram(CubeMap.GetShader());
+
+	glBindTexture(GL_TEXTURE_CUBE_MAP, CubeMap.textureID);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glBindVertexArray(CubeMap.VAO);
+
+	// Tres important ! D'une part, comme la cubemap represente un environnement distant
+	// il n'est pas utile d'ecrire dans le depth buffer (on est toujours au plus loin)
+	// cependant il faut quand effectuer le test de profondeur (donc on n'a pas glDisable(GL_DEPTH_TEST)).
+	// Neamoins il faut legerement changer l'operateur du test dans le cas ou 
+	glDepthMask(GL_FALSE);
+	glDepthFunc(GL_LEQUAL);
+	glDrawArrays(GL_TRIANGLES, 0, 8 * 2 * 3);
+
+	// On reset les machins
+	glDepthMask(GL_TRUE);
+	glDepthFunc(GL_LESS);
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+	glBindVertexArray(0);
+
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+	/////////////////// AFFICHAGE DES OBJETS ///////////////////////////
 	sphere.DisplayObj(glm::vec3(0.f, 0.f, 0.f));
 	character.DisplayObj(glm::vec3(0.f, 0.f, 0.f));
-	character.DisplayObj(glm::vec3(10.f, 0.f, 0.f));
+	character.DisplayObj(glm::vec3(10.f, 0.f, -128.f));
 	
-	//auto program = character.GetShader();
-	//glUseProgram(program);
+
 
 
 	///////////////////////////RENDER MUR///////////////////
 
-	// rendu des murs avec illumination	
+	// rendu des murs
 	
 	glBindVertexArray(g_WallMesh.VAO);
-	auto program = Scene.GetShader();
+	 program = Scene.GetShader();
 	/*if (g_EnableDeferred)
 	{
 		program = g_EnablePositionTexture ? g_GBufferFatShader.GetProgram() : g_GBufferShader.GetProgram();
@@ -206,22 +379,34 @@ void Render()
 	glm::mat4& transform = g_Walls.worldMatrix;
 	glUniformMatrix4fv(worldLocation, 1, GL_FALSE, glm::value_ptr(transform));
 
+
+
+
+
+
 	//auto numLightsLocation = glGetUniformLocation(program, "u_numLights");
 	//glUniform1i(numLightsLocation, g_NumPointLights);
 
-	auto startIndex = 6;
+	 startIndex = 6;
 	glBindTexture(GL_TEXTURE_2D, g_Walls.textures[Walls::gWallTexture]);
-	glDrawArrays(GL_TRIANGLES, startIndex, 6 * 3); startIndex += 6 * 3;	// 4 murs
+	glDrawArrays(GL_TRIANGLES, startIndex, 6 * 3);
+	startIndex += 6 * 3;	// 4 murs
 	glBindTexture(GL_TEXTURE_2D, g_Walls.textures[Walls::gCeilingTexture]);
-	glDrawArrays(GL_TRIANGLES, startIndex, 6); startIndex += 6;	// plafond
+	glDrawArrays(GL_TRIANGLES, startIndex, 6);
+	startIndex += 6;	// plafond
 	glBindTexture(GL_TEXTURE_2D, g_Walls.textures[Walls::gFloorTexture]);
-	glDrawArrays(GL_TRIANGLES, startIndex, 6); startIndex += 6;	// sol
+	glDrawArrays(GL_TRIANGLES, startIndex, 6); 
+	startIndex += 6;	// sol
 
 
 
 		
 	///////////////////////////////////
 	
+
+	
+
+
 	glutSwapBuffers();
 	glutPostRedisplay();
 }
@@ -285,3 +470,5 @@ void KeyboardInput(unsigned char key, int x, int y)
 	}
 	}
 }
+
+

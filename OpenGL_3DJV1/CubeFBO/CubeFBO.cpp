@@ -119,7 +119,7 @@ void Initialize(int width, int height)
 
 	previousTime = glutGet(GLUT_ELAPSED_TIME);
 
-	CreateFBO(width, height);
+	
 
 	glGenVertexArrays(1, &cubeVAO);
 	glBindVertexArray(cubeVAO);
@@ -129,6 +129,8 @@ void Initialize(int width, int height)
 	glEnableVertexAttribArray(positionLocation);
 	glVertexAttribPointer(positionLocation, 3, GL_FLOAT, GL_FALSE, sizeof(float)*3, 0);
 	glBindVertexArray(0);
+
+	CreateFBO(width, height);
 }
 
 void Terminate()
@@ -296,7 +298,7 @@ void Render()
 	glBindFramebuffer(GL_FRAMEBUFFER, sceneFBO);
 
 	glViewport(0, 0, glutGet(GLUT_WINDOW_WIDTH), glutGet(GLUT_WINDOW_HEIGHT));
-	glClearColor(1.f, 0.5f, 0.5f, 1.0f);
+	glClearColor(1.f, 0.0f, 0.5f, 1.0f);
 	glClearDepth(1.F);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -319,10 +321,10 @@ void Render()
 	program = textureShader.GetProgram();
 	glUseProgram(program);
 
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, textureObj);
-	GLint textureLocation = glGetUniformLocation(program, "u_texture");
-	glUniform1i(textureLocation, 0);
+	//glActiveTexture(GL_TEXTURE0);
+	//glBindTexture(GL_TEXTURE_2D, textureObj);
+	//GLint textureLocation = glGetUniformLocation(program, "u_texture");
+	//glUniform1i(textureLocation, 0);
 
 	DrawCube(program);
 #endif

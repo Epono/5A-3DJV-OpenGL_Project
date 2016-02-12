@@ -19,11 +19,17 @@ public:
 	void Translate(glm::vec3);
 	void InitShader(std::string);
 	void Destroy();
+
+	void BindingForInit();
+	void CreateFBO(int width, int height);
+	void DestroyFBO();
+
 	
 	//pour la création du mesh
 	void InitMesh(std::string, std::string);
-	//bool LoadAndCreateTextureRGBA(const char *, GLuint &);
 	void DisplayObj(glm::vec3 &);
+	//bool LoadAndCreateTextureRGBA(const char *, GLuint &); // Méthode transferé dans Common
+
 
 	float nbVertices;
 	bool Norm;
@@ -37,7 +43,7 @@ public:
 	GLuint UBO;
 
 	GLuint FBO;
-
+	GLuint sceneFBO; // utilité ?
 
 	GLuint blockBind;
 

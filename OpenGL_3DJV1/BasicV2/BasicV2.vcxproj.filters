@@ -97,5 +97,11 @@
     <None Include="yolo.vs">
       <Filter>Source Files\shaders</Filter>
     </None>
+    <None Include="skybox.fs">
+      <Filter>Source Files\shaders</Filter>
+    </None>
+    <None Include="skybox.vs">
+      <Filter>Source Files\shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

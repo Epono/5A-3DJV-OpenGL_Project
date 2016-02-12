@@ -112,6 +112,8 @@
     <None Include="basico.vs" />
     <None Include="firstShader.fs" />
     <None Include="firstShader.vs" />
+    <None Include="skybox.fs" />
+    <None Include="skybox.vs" />
     <None Include="yolo.fs" />
     <None Include="yolo.vs" />
   </ItemGroup>

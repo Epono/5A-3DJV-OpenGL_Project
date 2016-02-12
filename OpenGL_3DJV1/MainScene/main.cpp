@@ -486,7 +486,7 @@ void Render()
 	// Tres important ! D'une part, comme la cubemap represente un environnement distant
 	// il n'est pas utile d'ecrire dans le depth buffer (on est toujours au plus loin)
 	// cependant il faut quand effectuer le test de profondeur (donc on n'a pas glDisable(GL_DEPTH_TEST)).
-	// Neamoins il faut legerement changer l'operateur du test dans le cas ou 
+	// Neamoins il faut legerement changer l'operateur du test dans le cas ou les lasagnes sont trop cuites
 	glDepthMask(GL_FALSE);
 	glDepthFunc(GL_LEQUAL);
 	glDrawArrays(GL_TRIANGLES, 0, 8 * 2 * 3);

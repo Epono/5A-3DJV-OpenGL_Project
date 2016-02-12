@@ -40,4 +40,4 @@
 #include <vector>
 
 bool LoadAndCreateTextureRGBA(const char *filename, GLuint &texID);
-
+bool LoadAndCreateCubeMap(const char* filesname[], GLuint &cubeMapID);
