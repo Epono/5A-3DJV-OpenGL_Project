@@ -275,7 +275,7 @@ void MeshObject::InitMesh(std::string inputfileObj, std::string inputfileTexture
 	{
 		if (LoadAndCreateTextureRGBA(inputfileTexture.c_str(), textureID) == false)
 		{
-			std::cout << "Erreur dans le chargement de la texture !" << std::endl;
+			std::cout << "Erreur dans le chargement de la texture !" << inputfileTexture.c_str() << std::endl;
 			std::cin.ignore();
 			exit(-1);
 		}
