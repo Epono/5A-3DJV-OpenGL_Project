@@ -65,9 +65,13 @@ struct ViewProj
 	glm::mat4 viewMatrix;
 	glm::mat4 projectionMatrix;
 	glm::vec3 rotation;
-	glm::vec4 position;
+	glm::vec3 position;
 	glm::vec3 translation;
 	GLuint UBO;
+
+	// Vecteurs orientation de la caméra
+	glm::vec3 forward;
+	glm::vec3 right;
 } g_Camera;
 
 void InitCubemap()
@@ -317,10 +321,19 @@ void Render()
 	
 	g_Camera.projectionMatrix = glm::perspectiveFov(45.f, (float)width, (float)height, 0.1f, 1000.f);
 	// rotation orbitale de la camera
-	float rotY = glm::radians(g_Camera.rotation.y);
-	g_Camera.position = glm::eulerAngleY(rotY) * glm::vec4(0.0f, 20.0f, 50.0f, 1.0f);
-	g_Camera.viewMatrix = glm::lookAt(glm::vec3(g_Camera.position), glm::vec3(0.f), glm::vec3(0.f, 1.f, 0.f));
-	g_Camera.viewMatrix = glm::translate(g_Camera.viewMatrix, g_Camera.translation);
+
+	// OLD
+	//float rotY = glm::radians(g_Camera.rotation.y);
+	//g_Camera.position = glm::eulerAngleY(rotY) * glm::vec3(0.0f, 20.0f, 50.0f);
+	//g_Camera.viewMatrix = glm::lookAt(glm::vec3(g_Camera.position), glm::vec3(0.f), glm::vec3(0.f, 1.f, 0.f));
+	//g_Camera.viewMatrix = glm::translate(g_Camera.viewMatrix, g_Camera.translation);
+
+	// NEW
+	g_Camera.projectionMatrix = glm::perspectiveFov(45.f, (float) width, (float) height, 0.1f, 1000.f);
+	glm::vec3 position = g_Camera.position;
+	glm::vec3 direction = g_Camera.forward;
+	g_Camera.viewMatrix = glm::lookAt(position, position + direction, glm::vec3(0.f, 1.f, 0.f));
+
 	// IL FAUT TRANSFERER LES MATRICES VIEW ET PROJ AU SHADER
 	glBindBuffer(GL_UNIFORM_BUFFER, g_Camera.UBO);
 	glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4) * 2, glm::value_ptr(g_Camera.viewMatrix), GL_STREAM_DRAW);
@@ -410,6 +423,145 @@ void Render()
 	glutSwapBuffers();
 	glutPostRedisplay();
 }
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+float horizontalAngleCamera = 3.14f;				// Initial horizontal angle : toward -Z
+float verticalAngleCamera = 0.0f;					// Initial vertical angle : none
+float mouseSpeedCamera = 0.005f;
+float mouseSpeedMoveObject = 0.05f;
+float movementSpeed = 50.0f;
+
+int oldX;
+int oldY;
+int deltaX;
+int deltaY;
+unsigned char keyState[255];
+unsigned char mouseButtonsState[10];
+
+void Update() {
+	///////////////////////////////////////////////////////////////////////////////////// Calcul du temps écoulé (pour que la puissance du PC influe pas)
+	auto currentTime = glutGet(GLUT_ELAPSED_TIME);
+	auto delta = currentTime - previousTime;
+	previousTime = currentTime;
+	auto elapsedTime = delta / 1000.0f;
+
+	///////////////////////////////////////////////////////////////////////////////////// Gestion du clavier (principalement déplacement)
+	if(keyState['z'] == GLUT_DOWN) {
+		g_Camera.position += elapsedTime* g_Camera.forward * movementSpeed;
+	}
+	else if(keyState['s'] == GLUT_DOWN) {
+		g_Camera.position -= elapsedTime* g_Camera.forward * movementSpeed;
+	}
+
+	if(keyState['q'] == GLUT_DOWN) {
+		g_Camera.position -= elapsedTime* g_Camera.right * movementSpeed;
+	}
+	else if(keyState['d'] == GLUT_DOWN) {
+		g_Camera.position += elapsedTime* g_Camera.right * movementSpeed;
+	}
+
+	if(keyState['e'] == GLUT_DOWN || keyState[' '] == GLUT_DOWN) {
+		g_Camera.position.y += elapsedTime * movementSpeed;
+	}
+	else if(keyState['a'] == GLUT_DOWN) {
+		g_Camera.position.y -= elapsedTime * movementSpeed;
+	}
+
+	if(keyState[27] == GLUT_DOWN) {
+		exit(0);
+	}
+
+	///////////////////////////////////////////////////////////////////////////////////// Gestion de la souris (drag)
+	// TODO: difficile à déplacer :/
+	if(mouseButtonsState[GLUT_LEFT_BUTTON] == GLUT_DOWN || mouseButtonsState[GLUT_RIGHT_BUTTON] == GLUT_DOWN) {
+		if(mouseButtonsState[GLUT_LEFT_BUTTON] == GLUT_DOWN) {
+
+		}
+		else if(mouseButtonsState[GLUT_RIGHT_BUTTON] == GLUT_DOWN) {
+
+		}
+	}
+
+	glutPostRedisplay();
+}
+
+void mouse(int button, int state, int x, int y) {
+	mouseButtonsState[button] = state;
+		if(state == GLUT_DOWN) {
+			oldX = x;
+			oldY = y;
+		}
+	glutPostRedisplay();
+}
+
+void motion(int x, int y) {
+		deltaX = oldX - x;
+		deltaY = oldY - y;
+
+		int width = glutGet(GLUT_WINDOW_WIDTH);
+		int height = glutGet(GLUT_WINDOW_HEIGHT);
+
+		Quaternion qX(
+			sin(((y) * M_PI) / height),
+			0,
+			0,
+			cos(((y) * M_PI) / height)
+			);
+		Quaternion qY(
+			0,
+			sin(((x) * M_PI) / width),
+			0,
+			cos(((x) * M_PI) / width)
+			);
+
+		Quaternion rotation = qY * qX;
+
+		// Rotation camera
+		if(mouseButtonsState[GLUT_RIGHT_BUTTON] == GLUT_DOWN) {
+			horizontalAngleCamera += mouseSpeedCamera * deltaX;
+			verticalAngleCamera += mouseSpeedCamera * deltaY;
+
+			// Vecteur avant
+			glm::vec3 forward = glm::vec3(
+				cos(verticalAngleCamera) * sin(horizontalAngleCamera),
+				sin(verticalAngleCamera),
+				cos(verticalAngleCamera) * cos(horizontalAngleCamera)
+				);
+
+			// Vecteur droite
+			glm::vec3 right = glm::vec3(
+				sin(horizontalAngleCamera - M_PI / 2.0f),
+				0,
+				cos(horizontalAngleCamera - M_PI / 2.0f)
+				);
+
+			// Vecteur haut
+			glm::vec3 up = glm::cross(g_Camera.forward, g_Camera.right);
+
+			g_Camera.forward = forward;
+			g_Camera.right = right;
+			//g_Camera.rotationMatrix = rotation.toRotationMatrix();
+		}
+
+		oldX = x;
+		oldY = y;
+	
+
+	glutPostRedisplay();
+}
+
+void keyboard(unsigned char key, int x, int y) {
+	keyState[key] = GLUT_DOWN;
+}
+
+void keyboardUp(unsigned char key, int x, int y) {
+	keyState[key] = GLUT_UP;
+}
 
 int main(int argc, char* argv[])
 {
@@ -417,7 +569,6 @@ int main(int argc, char* argv[])
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);
 	glutInitWindowSize(800, 600);
 	glutCreateWindow("Basic");
-	glutKeyboardFunc(KeyboardInput);
 
 #ifdef FREEGLUT
 	// Note: glutSetOption n'est disponible qu'avec freeGLUT
@@ -425,9 +576,29 @@ int main(int argc, char* argv[])
 		GLUT_ACTION_GLUTMAINLOOP_RETURNS);
 #endif
 
+	// Init du clavier
+	for(int i = 0; i < 256; i++) {
+		keyState[i] = GLUT_UP;
+	}
+
+	// Init de la souris
+	for(int i = 0; i < 10; i++) {
+		mouseButtonsState[i] = GLUT_UP;
+	}
+
+	g_Camera.position = glm::vec3(0.0f, 15.0f, 35.0f);
+	g_Camera.forward = glm::vec3(0.0f, 0.0f, -1.0f);
+	g_Camera.right = glm::vec3(1.0f, 0.0f, 0.0f);
+
 	Initialize();
 
+	glutIdleFunc(Update);
 	glutDisplayFunc(Render);
+
+	glutMouseFunc(mouse);
+	glutMotionFunc(motion);
+	glutKeyboardFunc(keyboard);
+	glutKeyboardUpFunc(keyboardUp);
 
 	glutMainLoop();
 

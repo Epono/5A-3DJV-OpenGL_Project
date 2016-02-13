@@ -17,6 +17,7 @@
 #endif
 
 #include "../common/EsgiShader.h"
+#include "Quaternion.h"
 
 #include "stb/stb_image.h"
 
@@ -30,10 +31,11 @@
 
 #include "tinyobjloader/tiny_obj_loader.h"
 
-
+#define _USE_MATH_DEFINES
 #include <iostream>
 #include <cstdio>
 #include <cmath>
+#include <math.h>
 #include <cassert>
 #include <algorithm>
 #include <string>
