@@ -89,7 +89,6 @@
     <ClCompile Include="BasicV2.cpp" />
     <ClCompile Include="Common.cpp" />
     <ClCompile Include="MeshObject.cpp" />
-    <ClCompile Include="Quaternion.cpp" />
     <ClCompile Include="Scene.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
     </ClCompile>
@@ -101,7 +100,6 @@
     <ClInclude Include="Common.h" />
     <ClInclude Include="MeshesInfo.h" />
     <ClInclude Include="MeshObject.h" />
-    <ClInclude Include="Quaternion.h" />
     <ClInclude Include="Scene.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
     </ClInclude>

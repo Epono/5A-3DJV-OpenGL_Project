@@ -1,7 +1,5 @@
 #pragma once
 
-
-
 // Specifique a Windows
 #if _WIN32
 #define GLEW_STATIC 1
@@ -17,7 +15,6 @@
 #endif
 
 #include "../common/EsgiShader.h"
-#include "Quaternion.h"
 
 #include "stb/stb_image.h"
 
@@ -27,7 +24,6 @@
 #include "glm/gtc/type_ptr.hpp"
 // extension glm : 
 #include "glm/gtx/euler_angles.hpp"
-
 
 #include "tinyobjloader/tiny_obj_loader.h"
 

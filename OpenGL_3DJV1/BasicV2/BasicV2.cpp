@@ -503,24 +503,6 @@ void motion(int x, int y) {
 		deltaX = oldX - x;
 		deltaY = oldY - y;
 
-		int width = glutGet(GLUT_WINDOW_WIDTH);
-		int height = glutGet(GLUT_WINDOW_HEIGHT);
-
-		Quaternion qX(
-			sin(((y) * M_PI) / height),
-			0,
-			0,
-			cos(((y) * M_PI) / height)
-			);
-		Quaternion qY(
-			0,
-			sin(((x) * M_PI) / width),
-			0,
-			cos(((x) * M_PI) / width)
-			);
-
-		Quaternion rotation = qY * qX;
-
 		// Rotation camera
 		if(mouseButtonsState[GLUT_RIGHT_BUTTON] == GLUT_DOWN) {
 			horizontalAngleCamera += mouseSpeedCamera * deltaX;
@@ -550,7 +532,6 @@ void motion(int x, int y) {
 
 		oldX = x;
 		oldY = y;
-	
 
 	glutPostRedisplay();
 }
