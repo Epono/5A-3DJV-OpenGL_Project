@@ -1,27 +1,15 @@
-// Basic.cpp : Defines the entry point for the console application.
-//
-
 #include "Common.h"
 
 #include "MeshObject.h"
 #include "Scene.h"
 
-// Macro utile au VBO
-
+///////////////// MACRO UTILE AU VBO ///////////////////
 #ifndef BUFFER_OFFSET
-
-#define BUFFER_OFFSET(offset) ((char*)NULL + (offset))
-
+	#define BUFFER_OFFSET(offset) ((char*)NULL + (offset))
 #endif
+///////////////// MACRO UTILE AU VBO ///////////////////
 
-EsgiShader sceneShader;
-
-glm::mat4 modelview;
-glm::mat4 projectionview;
-glm::mat4 camview;
-GLuint textureID;
-
-//Liste des objets present dans la scene
+///////////////// OBJETS DANS LA SCENE ///////////////////
 MeshObject babyCube;
 MeshObject plane;
 MeshObject desk;
@@ -31,25 +19,47 @@ MeshObject CubeMap;
 
 MeshObject ShadowMap;
 
-
 MeshObject aCube;
 MeshObject bCube;
 MeshObject sphere;
 MeshObject character;
 MeshObject ground;
 MeshObject Scene;
+///////////////// OBJETS DANS LA SCENE ///////////////////
 
+///////////////// VARIABLES GLOBALES QU'ON LES AIME ///////////////////
+#define WINDOW_WIDTH 1280
+#define WINDOW_HEIGHT 720
+#define WINDOW_NAME "OpenGLAGLA"
 int previousTime = 0;
 
-void KeyboardInput(unsigned char key, int x, int y);
+float horizontalAngleCamera = 3.14f;				// Initial horizontal angle : toward -Z
+float verticalAngleCamera = 0.0f;					// Initial vertical angle : none
+float mouseSpeedCamera = 0.005f;
+float movementSpeed = 50.0f;
 
-/////////////////SCENE TEST///////////////////
+int oldX, oldY;
+unsigned char keyState[255], mouseButtonsState[3];
+///////////////// VARIABLES GLOBALES QU'ON LES AIME ///////////////////
+
+///////////////// PROTOTYPES ///////////////////
+void InitializeOpenGL();
+void InitCubemap();
+void InitializeLogic();
+
+void Render();
+void Update();
+
+void Mouse(int button, int state, int x, int y);
+void Motion(int x, int y);
+void Keyboard(unsigned char key, int x, int y);
+void KeyboardUp(unsigned char key, int x, int y);
+///////////////// PROTOTYPES ///////////////////
+
+///////////////// SCENE TEST ///////////////////
 extern Vertex g_Room[36];
-
 Walls g_Walls;
-
 Mesh g_WallMesh;
-
 GLuint Material::UBO;
 
 Material g_ShinyMaterial = {
@@ -58,22 +68,59 @@ Material g_ShinyMaterial = {
 	glm::vec4(0.0f, 0.0f, 0.0f, 1.0f),
 	glm::vec4(1.0f, 1.0f, 1.0f, 32.0f)
 };
+///////////////// SCENE TEST ///////////////////
 
-
+///////////////// STRUCTURE CAMERA ///////////////////
 struct ViewProj
 {
+	// Matrices de la caméra
 	glm::mat4 viewMatrix;
 	glm::mat4 projectionMatrix;
+
+	// Transform de la caméra
 	glm::vec3 rotation;
 	glm::vec3 position;
-	glm::vec3 translation;
+
+	// UBO de la caméra
 	GLuint UBO;
 
 	// Vecteurs orientation de la caméra
 	glm::vec3 forward;
 	glm::vec3 right;
 } g_Camera;
+///////////////// STRUCTURE CAMERA ///////////////////
 
+////////////////////////////////////////////////////////////////////////////////// main ///////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+int main(int argc, char* argv[]) {
+	glutInit(&argc, argv);
+	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);
+	glutInitWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
+	glutCreateWindow(WINDOW_NAME);
+
+#ifdef FREEGLUT
+	// Note: glutSetOption n'est disponible qu'avec freeGLUT
+	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
+#endif
+
+	InitializeOpenGL();
+	InitializeLogic();
+
+	glutIdleFunc(Update);
+	glutDisplayFunc(Render);
+
+	glutMouseFunc(Mouse);
+	glutMotionFunc(Motion);
+	glutKeyboardFunc(Keyboard);
+	glutKeyboardUpFunc(KeyboardUp);
+
+	glutMainLoop();
+
+	return 0;
+}
+
+////////////////////////////////////////////////////////////////////////////////// InitCubemap ///////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void InitCubemap()
 {
 	static const float skyboxVertices[] = {
@@ -128,19 +175,19 @@ void InitCubemap()
 		"skybox/back.jpg",
 		"skybox/front.jpg",
 
-		/*"skybox/Powerlines/posx.jpg",
-		"skybox/Powerlines/negx.jpg",
-		"skybox/Powerlines/posy.jpg",
-		"skybox/Powerlines/negy.jpg",
-		"skybox/Powerlines/posz.jpg",
-		"skybox/Powerlines/negz.jpg",*/
+		//"skybox/Powerlines/posx.jpg",
+		//"skybox/Powerlines/negx.jpg",
+		//"skybox/Powerlines/posy.jpg",
+		//"skybox/Powerlines/negy.jpg",
+		//"skybox/Powerlines/posz.jpg",
+		//"skybox/Powerlines/negz.jpg",
 
-		/*"skybox/Park3/posx.jpg",
-		"skybox/Park3/negx.jpg",
-		"skybox/Park3/posy.jpg",
-		"skybox/Park3/negy.jpg",
-		"skybox/Park3/posz.jpg",
-		"skybox/Park3/negz.jpg",*/
+		//"skybox/Park3/posx.jpg",
+		//"skybox/Park3/negx.jpg",
+		//"skybox/Park3/posy.jpg",
+		//"skybox/Park3/negy.jpg",
+		//"skybox/Park3/posz.jpg",
+		//"skybox/Park3/negz.jpg",
 	};
 
 	LoadAndCreateCubeMap(skyboxFiles, CubeMap.textureID);
@@ -159,9 +206,6 @@ void InitCubemap()
 	glBindVertexArray(0);
 
 	CubeMap.InitShader("skybox");
-	//g_SkyboxShader.LoadVertexShader("skybox.vs");
-	//g_SkyboxShader.LoadFragmentShader("skybox.fs");
-	//g_SkyboxShader.Create();
 
 	auto program = CubeMap.GetShader();
 	glUseProgram(program);
@@ -177,13 +221,9 @@ void InitCubemap()
 	glUseProgram(0);
 }
 
-
-
-
-
-
-
-void Initialize()
+////////////////////////////////////////////////////////////////////////////////// InitializeOpenGL ///////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void InitializeOpenGL()
 {
 	printf("Version Pilote OpenGL : %s\n", glGetString(GL_VERSION));
 	printf("Type de GPU : %s\n", glGetString(GL_RENDERER));
@@ -259,30 +299,18 @@ void Initialize()
 
 	character.BindingForInit();
 	sphere.BindingForInit();
-	
-	//EST remplacé par les deux lignes au dessus
-	/*glBindVertexArray(character.VAO);
-	glBindVertexArray(character.IBO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, character.IBO);
-	
-	glBindVertexArray(sphere.VAO);
-	glBindVertexArray(sphere.IBO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, sphere.IBO);*/
-	
-	
 
 	glBindVertexArray(0);
 	
-	Scene.CreateFBO(800, 600);
-
+	Scene.CreateFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
 
 	InitCubemap();
 
 	//creationVBO
-
-	g_Camera.translation = glm::vec3(0, 0, 0);
 }
 
+////////////////////////////////////////////////////////////////////////////////// Render ///////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void Render()
 {
 	////TEST FBO ////
@@ -392,11 +420,6 @@ void Render()
 	glm::mat4& transform = g_Walls.worldMatrix;
 	glUniformMatrix4fv(worldLocation, 1, GL_FALSE, glm::value_ptr(transform));
 
-
-
-
-
-
 	//auto numLightsLocation = glGetUniformLocation(program, "u_numLights");
 	//glUniform1i(numLightsLocation, g_NumPointLights);
 
@@ -411,46 +434,40 @@ void Render()
 	glDrawArrays(GL_TRIANGLES, startIndex, 6); 
 	startIndex += 6;	// sol
 
-
-
-		
 	///////////////////////////////////
-	
-
-	
-
 
 	glutSwapBuffers();
 	glutPostRedisplay();
 }
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-float horizontalAngleCamera = 3.14f;				// Initial horizontal angle : toward -Z
-float verticalAngleCamera = 0.0f;					// Initial vertical angle : none
-float mouseSpeedCamera = 0.005f;
-float mouseSpeedMoveObject = 0.05f;
-float movementSpeed = 50.0f;
+////////////////////////////////////////////////////////////////////////////////// InitializeLogic ///////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void InitializeLogic() {
+	// Init du clavier
+	for(int i = 0; i < 255; i++) {
+		keyState[i] = GLUT_UP;
+	}
 
-int oldX;
-int oldY;
-int deltaX;
-int deltaY;
-unsigned char keyState[255];
-unsigned char mouseButtonsState[10];
+	// Init de la souris
+	for(int i = 0; i < 3; i++) {
+		mouseButtonsState[i] = GLUT_UP;
+	}
 
+	g_Camera.position = glm::vec3(0.0f, 15.0f, 35.0f);
+	g_Camera.forward = glm::vec3(0.0f, 0.0f, -1.0f);
+	g_Camera.right = glm::vec3(1.0f, 0.0f, 0.0f);
+}
+
+////////////////////////////////////////////////////////////////////////////////// Update ///////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void Update() {
-	///////////////////////////////////////////////////////////////////////////////////// Calcul du temps écoulé (pour que la puissance du PC influe pas)
+	// Calcul du temps écoulé (pour que la puissance du PC influe pas)
 	auto currentTime = glutGet(GLUT_ELAPSED_TIME);
 	auto delta = currentTime - previousTime;
 	previousTime = currentTime;
 	auto elapsedTime = delta / 1000.0f;
 
-	///////////////////////////////////////////////////////////////////////////////////// Gestion du clavier (principalement déplacement)
+	// Gestion du clavier (principalement déplacement)
 	if(keyState['z'] == GLUT_DOWN) {
 		g_Camera.position += elapsedTime* g_Camera.forward * movementSpeed;
 	}
@@ -476,8 +493,7 @@ void Update() {
 		exit(0);
 	}
 
-	///////////////////////////////////////////////////////////////////////////////////// Gestion de la souris (drag)
-	// TODO: difficile à déplacer :/
+	// Gestion de la souris (drag)
 	if(mouseButtonsState[GLUT_LEFT_BUTTON] == GLUT_DOWN || mouseButtonsState[GLUT_RIGHT_BUTTON] == GLUT_DOWN) {
 		if(mouseButtonsState[GLUT_LEFT_BUTTON] == GLUT_DOWN) {
 
@@ -486,11 +502,12 @@ void Update() {
 
 		}
 	}
-
 	glutPostRedisplay();
 }
 
-void mouse(int button, int state, int x, int y) {
+////////////////////////////////////////////////////////////////////////////////// Mouse ///////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void Mouse(int button, int state, int x, int y) {
 	mouseButtonsState[button] = state;
 		if(state == GLUT_DOWN) {
 			oldX = x;
@@ -499,11 +516,12 @@ void mouse(int button, int state, int x, int y) {
 	glutPostRedisplay();
 }
 
-void motion(int x, int y) {
-		deltaX = oldX - x;
-		deltaY = oldY - y;
+////////////////////////////////////////////////////////////////////////////////// Motion ///////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void Motion(int x, int y) {
+		auto deltaX = oldX - x;
+		auto deltaY = oldY - y;
 
-		// Rotation camera
 		if(mouseButtonsState[GLUT_RIGHT_BUTTON] == GLUT_DOWN) {
 			horizontalAngleCamera += mouseSpeedCamera * deltaX;
 			verticalAngleCamera += mouseSpeedCamera * deltaY;
@@ -536,91 +554,14 @@ void motion(int x, int y) {
 	glutPostRedisplay();
 }
 
-void keyboard(unsigned char key, int x, int y) {
+////////////////////////////////////////////////////////////////////////////////// Keyboard ///////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void Keyboard(unsigned char key, int x, int y) {
 	keyState[key] = GLUT_DOWN;
 }
 
-void keyboardUp(unsigned char key, int x, int y) {
+////////////////////////////////////////////////////////////////////////////////// KeyboardUp ///////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void KeyboardUp(unsigned char key, int x, int y) {
 	keyState[key] = GLUT_UP;
 }
-
-int main(int argc, char* argv[])
-{
-	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);
-	glutInitWindowSize(800, 600);
-	glutCreateWindow("Basic");
-
-#ifdef FREEGLUT
-	// Note: glutSetOption n'est disponible qu'avec freeGLUT
-	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE,
-		GLUT_ACTION_GLUTMAINLOOP_RETURNS);
-#endif
-
-	// Init du clavier
-	for(int i = 0; i < 256; i++) {
-		keyState[i] = GLUT_UP;
-	}
-
-	// Init de la souris
-	for(int i = 0; i < 10; i++) {
-		mouseButtonsState[i] = GLUT_UP;
-	}
-
-	g_Camera.position = glm::vec3(0.0f, 15.0f, 35.0f);
-	g_Camera.forward = glm::vec3(0.0f, 0.0f, -1.0f);
-	g_Camera.right = glm::vec3(1.0f, 0.0f, 0.0f);
-
-	Initialize();
-
-	glutIdleFunc(Update);
-	glutDisplayFunc(Render);
-
-	glutMouseFunc(mouse);
-	glutMotionFunc(motion);
-	glutKeyboardFunc(keyboard);
-	glutKeyboardUpFunc(keyboardUp);
-
-	glutMainLoop();
-
-	return 0;
-}
-
-void KeyboardInput(unsigned char key, int x, int y)
-{
-	switch (key)
-	{
-	case 'z':
-	{
-		g_Camera.translation += glm::vec3(0, 0, 1);
-		break;
-	}
-	case 's':
-	{
-		g_Camera.translation += glm::vec3(0, 0, -1);
-		break;
-	}
-	case 'q':
-	{
-		g_Camera.translation += glm::vec3(1, 0, 0);
-		break;
-	}
-	case 'd':
-	{
-		g_Camera.translation += glm::vec3(-1, 0, 0);
-		break;
-	}
-	case 'e':
-	{
-		g_Camera.rotation.y += -1;
-		break;
-	}
-	case 'a':
-	{
-		g_Camera.rotation.y += 1;
-		break;
-	}
-	}
-}
-
-
