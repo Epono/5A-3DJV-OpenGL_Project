@@ -41,6 +41,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>$(SolutionDir)BasicV2\Headers;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -86,32 +87,30 @@
   <ItemGroup>
     <ClCompile Include="..\common\EsgiShader.cpp" />
     <ClCompile Include="..\Libs\tinyobjloader\tiny_obj_loader.cc" />
-    <ClCompile Include="BasicV2.cpp" />
-    <ClCompile Include="Common.cpp" />
-    <ClCompile Include="MeshObject.cpp" />
-    <ClCompile Include="Scene.cpp">
+    <ClCompile Include="Sources\BasicV2.cpp" />
+    <ClCompile Include="Sources\Common.cpp" />
+    <ClCompile Include="Sources\MeshObject.cpp" />
+    <ClCompile Include="Sources\Scene.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="SceneArea.cpp" />
+    <ClCompile Include="Sources\SceneArea.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\EsgiShader.h" />
     <ClInclude Include="..\Libs\tinyobjloader\tiny_obj_loader.h" />
-    <ClInclude Include="Common.h" />
-    <ClInclude Include="MeshesInfo.h" />
-    <ClInclude Include="MeshObject.h" />
-    <ClInclude Include="Scene.h">
+    <ClInclude Include="Headers\Common.h" />
+    <ClInclude Include="Headers\MeshesInfo.h" />
+    <ClInclude Include="Headers\MeshObject.h" />
+    <ClInclude Include="Headers\Scene.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="SceneArea.h" />
+    <ClInclude Include="Headers\SceneArea.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="basic.fs" />
     <None Include="basic.vs" />
     <None Include="basico.fs" />
     <None Include="basico.vs" />
-    <None Include="firstShader.fs" />
-    <None Include="firstShader.vs" />
     <None Include="skybox.fs" />
     <None Include="skybox.vs" />
     <None Include="yolo.fs" />
