@@ -58,7 +58,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>..\Libs\freeglut\lib;..\Libs\glew-1.12.0\lib\Release\Win32</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\libs\AntTweakBar\lib;..\Libs\freeglut\lib;..\Libs\glew-1.12.0\lib\Release\Win32</AdditionalLibraryDirectories>
       <AdditionalDependencies>glew32s.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -82,9 +82,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <Text Include="ReadMe.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="..\common\EsgiShader.cpp" />
     <ClCompile Include="..\Libs\tinyobjloader\tiny_obj_loader.cc" />
     <ClCompile Include="Sources\BasicV2.cpp" />
@@ -105,16 +102,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="Headers\SceneArea.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="basic.fs" />
-    <None Include="basic.vs" />
-    <None Include="basico.fs" />
-    <None Include="basico.vs" />
-    <None Include="skybox.fs" />
-    <None Include="skybox.vs" />
-    <None Include="yolo.fs" />
-    <None Include="yolo.vs" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

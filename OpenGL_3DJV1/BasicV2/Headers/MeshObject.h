@@ -28,6 +28,7 @@ public:
 	//pour la création du mesh
 	void InitMesh(std::string, std::string);
 	void DisplayObj(glm::vec3 &);
+	void DisplayObjShadowMap(glm::vec3 &position, EsgiShader &shader);
 	//bool LoadAndCreateTextureRGBA(const char *, GLuint &); // Méthode transferé dans Common
 
 

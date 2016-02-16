@@ -5,7 +5,7 @@
 
 ///////////////// MACRO UTILE AU VBO ///////////////////
 #ifndef BUFFER_OFFSET
-	#define BUFFER_OFFSET(offset) ((char*)NULL + (offset))
+#define BUFFER_OFFSET(offset) ((char*)NULL + (offset))
 #endif
 ///////////////// MACRO UTILE AU VBO ///////////////////
 
@@ -21,10 +21,10 @@ MeshObject ShadowMap;
 
 MeshObject aCube;
 MeshObject bCube;
-MeshObject sphere;
-MeshObject character;
+MeshObject rock;
+MeshObject bear;
 MeshObject ground;
-MeshObject Scene;
+MeshObject scene;
 ///////////////// OBJETS DANS LA SCENE ///////////////////
 
 ///////////////// VARIABLES GLOBALES QU'ON LES AIME ///////////////////
@@ -53,8 +53,6 @@ Material g_ShinyMaterial = {
 	glm::vec4(0.0f, 0.0f, 0.0f, 1.0f),
 	glm::vec4(1.0f, 1.0f, 1.0f, 32.0f)
 };
-
-glm::vec3 lightPos(-2.0f, 4.0f, -1.0f);
 ///////////////// VARIABLES GLOBALES QU'ON LES AIME ///////////////////
 
 ///////////////// PROTOTYPES ///////////////////
@@ -63,17 +61,19 @@ void InitCubemap();
 void InitializeLogic();
 
 void Render();
+void RenderScene(EsgiShader &shader);
 void Update();
 
 void Mouse(int button, int state, int x, int y);
 void Motion(int x, int y);
 void Keyboard(unsigned char key, int x, int y);
 void KeyboardUp(unsigned char key, int x, int y);
+
+void RenderOld();
 ///////////////// PROTOTYPES ///////////////////
 
 ///////////////// STRUCTURE CAMERA ///////////////////
-struct ViewProj
-{
+struct ViewProj {
 	// Matrices de la caméra
 	glm::mat4 viewMatrix;
 	glm::mat4 projectionMatrix;
@@ -90,6 +90,19 @@ struct ViewProj
 	glm::vec3 right;
 } g_Camera;
 ///////////////// STRUCTURE CAMERA ///////////////////
+
+///////////////// SHADOW MAPPING ///////////////////
+EsgiShader shader;
+EsgiShader simpleDepthShader;
+EsgiShader debugDepthQuad;
+
+// Light source
+glm::vec3 lightPos(0.0f, 0.0f, 0.0f);
+
+const GLuint SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+GLuint depthMapFBO;
+GLuint depthMap;
+///////////////// SHADOW MAPPING ///////////////////
 
 ////////////////////////////////////////////////////////////////////////////////// main ///////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -108,7 +121,7 @@ int main(int argc, char* argv[]) {
 	InitializeLogic();
 
 	glutIdleFunc(Update);
-	glutDisplayFunc(Render);
+	glutDisplayFunc(RenderOld);
 
 	glutMouseFunc(Mouse);
 	glutMotionFunc(Motion);
@@ -122,8 +135,7 @@ int main(int argc, char* argv[]) {
 
 ////////////////////////////////////////////////////////////////////////////////// InitCubemap ///////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void InitCubemap()
-{
+void InitCubemap() {
 	static const float skyboxVertices[] = {
 		-1.0f,  1.0f, -1.0f,
 		-1.0f, -1.0f, -1.0f,
@@ -203,7 +215,7 @@ void InitCubemap()
 	//			sa taille lors de la compilation. Autrement sizeof aurait du renvoyer la taille du pointeur.
 	glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), skyboxVertices, GL_STATIC_DRAW);
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*) 0);
 	glBindVertexArray(0);
 
 	CubeMap.InitShader("Shaders/skybox");
@@ -224,8 +236,7 @@ void InitCubemap()
 
 ////////////////////////////////////////////////////////////////////////////////// InitializeOpenGL ///////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void InitializeOpenGL()
-{
+void InitializeOpenGL() {
 	printf("Version Pilote OpenGL : %s\n", glGetString(GL_VERSION));
 	printf("Type de GPU : %s\n", glGetString(GL_RENDERER));
 	printf("Fabricant : %s\n", glGetString(GL_VENDOR));
@@ -234,15 +245,14 @@ void InitializeOpenGL()
 
 	//Init GLEW		
 	GLenum init = glewInit();
-	if (init != GL_NO_ERROR)
-	{
+	if(init != GL_NO_ERROR) {
 
 	}
 
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 	glEnable(GL_CULL_FACE);
-	
+
 	/////////////////////SCENE INIT////////////////////
 	glGenBuffers(1, &Material::UBO);
 	glBindBuffer(GL_UNIFORM_BUFFER, Material::UBO);
@@ -264,9 +274,8 @@ void InitializeOpenGL()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-	Scene.InitShader("Shaders/yolo");
+	scene.InitShader("Shaders/scene");
 	//////////////////////////////////////////////////////////////////////////////////////
-
 
 	//Initialisation caméra 
 	glGenBuffers(1, &g_Camera.UBO);
@@ -277,97 +286,197 @@ void InitializeOpenGL()
 
 	glBindBufferBase(GL_UNIFORM_BUFFER, id_blockBind, g_Camera.UBO);
 
-	//Initialisation des meshes //TODO : créer une fonction dans MeshObject
-	character.InitShader("Shaders/basico");
-	sphere.InitShader("Shaders/basico");
-	auto basicProgram = character.GetShader();
-	auto sphereProgram = sphere.GetShader(); 
-	auto sceneProgram = Scene.GetShader();
+	//Initialisation des meshes
+	bear.InitShader("Shaders/basic");
+	rock.InitShader("Shaders/basic");
+	auto bearProgram = bear.GetShader();
+	auto rockProgram = rock.GetShader();
+	auto sceneProgram = scene.GetShader();
 
-
-	auto blockIndex = glGetUniformBlockIndex(basicProgram, "ViewProj");
-	auto blockIndex2 = glGetUniformBlockIndex(sphereProgram, "ViewProj");
+	auto blockIndex = glGetUniformBlockIndex(bearProgram, "ViewProj");
+	auto blockIndex2 = glGetUniformBlockIndex(rockProgram, "ViewProj");
 	auto blockIndex3 = glGetUniformBlockIndex(sceneProgram, "ViewProj");
 
-	glUniformBlockBinding(basicProgram, blockIndex, id_blockBind);
-	glUniformBlockBinding(sphereProgram, blockIndex2, id_blockBind);
+	glUniformBlockBinding(bearProgram, blockIndex, id_blockBind);
+	glUniformBlockBinding(rockProgram, blockIndex2, id_blockBind);
 	glUniformBlockBinding(sceneProgram, blockIndex3, id_blockBind);
 
 	previousTime = glutGet(GLUT_ELAPSED_TIME);
 
-	character.InitMesh("Assets/Obj/bear-obj.obj", "Assets/Obj/bear.tga");
-	sphere.InitMesh("Assets/Obj/rock.obj", "Assets/Obj/Rock-Texture-Surface.jpg");
+	bear.InitMesh("Assets/Obj/bear-obj.obj", "Assets/Obj/bear.tga");
+	rock.InitMesh("Assets/Obj/rock.obj", "Assets/Obj/Rock-Texture-Surface.jpg");
 
-	character.BindingForInit();
-	sphere.BindingForInit();
+	bear.BindingForInit();
+	rock.BindingForInit();
 
 	glBindVertexArray(0);
-	
-	Scene.CreateFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
+
+	scene.CreateFBO(WINDOW_WIDTH, WINDOW_HEIGHT);
 
 	InitCubemap();
 
 	//creationVBO
-}
 
-////////////////////////////////////////////////////////////////////////////////// Render ///////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void Render()
-{
-	////TEST FBO ////
-	glBindFramebuffer(GL_FRAMEBUFFER, Scene.sceneFBO);
-	glViewport(0, 0, glutGet(GLUT_WINDOW_WIDTH), glutGet(GLUT_WINDOW_HEIGHT));
-	glClearColor(1.f, 0.0f, 0.5f, 1.0f);
-	glClearDepth(1.F);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	/////////////////////////////////////////////////////// Shadow mapping
+	///////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////
+	// Define the viewport dimensions
+	glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
 
-	GLuint program = Scene.GetShader();
+	// Setup and compile our shaders
+	shader.LoadVertexShader("Shaders/ShadowMapping/shadow_mapping.vs");
+	shader.LoadFragmentShader("Shaders/ShadowMapping/shadow_mapping.fs");
+	shader.Create();
+
+	simpleDepthShader.LoadVertexShader("Shaders/ShadowMapping/shadow_mapping_depth.vs");
+	simpleDepthShader.LoadFragmentShader("Shaders/ShadowMapping/shadow_mapping_depth.fs");
+	simpleDepthShader.Create();
+
+	debugDepthQuad.LoadVertexShader("Shaders/ShadowMapping/debug_quad.vs");
+	debugDepthQuad.LoadFragmentShader("Shaders/ShadowMapping/debug_quad_depth.fs");
+	debugDepthQuad.Create();
+
+	// Set texture samples
+	auto program = shader.GetProgram();
 	glUseProgram(program);
+	glUniform1i(glGetUniformLocation(program, "diffuseTexture"), 0);
+	glUniform1i(glGetUniformLocation(program, "shadowMap"), 1);
 
-	auto startIndex = 6;
-	glBindTexture(GL_TEXTURE_2D, g_Walls.textures[Walls::gWallTexture]);
-	glDrawArrays(GL_TRIANGLES, startIndex, 6 * 3);
-	startIndex += 6 * 3;	// 4 murs
-	glBindTexture(GL_TEXTURE_2D, g_Walls.textures[Walls::gCeilingTexture]);
-	glDrawArrays(GL_TRIANGLES, startIndex, 6);
-	startIndex += 6;	// plafond
-	glBindTexture(GL_TEXTURE_2D, g_Walls.textures[Walls::gFloorTexture]);
-	glDrawArrays(GL_TRIANGLES, startIndex, 6);
-	startIndex += 6;
+	// Configure depth map FBO
+	glGenFramebuffers(1, &depthMapFBO);
+	// - Create depth texture
+	glGenTextures(1, &depthMap);
+	glBindTexture(GL_TEXTURE_2D, depthMap);
 
-	glUseProgram(0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	GLfloat borderColor[] = {1.0, 1.0, 1.0, 1.0};
+	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 
+	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-	////TEST FBO////
+	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+}
 
-	glViewport(0, 0, glutGet(GLUT_WINDOW_WIDTH), glutGet(GLUT_WINDOW_HEIGHT));
-	glClearColor(1.f, 0.0f, 0.0f, 1.0f);
+// RenderQuad() Renders a 1x1 quad in NDC, best used for framebuffer color targets
+// and post-processing effects.
+GLuint quadVAO = 0;
+GLuint quadVBO;
+void RenderQuad() {
+	if(quadVAO == 0) {
+		GLfloat quadVertices[] = {
+			// Positions        // Texture Coords
+			-1.0f,  1.0f, 0.0f,  0.0f, 1.0f,
+			-1.0f, -1.0f, 0.0f,  0.0f, 0.0f,
+			1.0f,  1.0f, 0.0f,  1.0f, 1.0f,
+			1.0f, -1.0f, 0.0f,  1.0f, 0.0f,
+		};
+		// Setup plane VAO
+		glGenVertexArrays(1, &quadVAO);
+		glGenBuffers(1, &quadVBO);
+		glBindVertexArray(quadVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*) 0);
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*) (3 * sizeof(GLfloat)));
+	}
+	glBindVertexArray(quadVAO);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	glBindVertexArray(0);
+}
+////////////////////////////////////////////////////////////////////////////////// Render ///////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void Render() {
+
+
+	// 1. Render depth of scene to texture (from light's perspective)
+	// - Get light projection/view matrix.
+	glm::mat4 lightProjection, lightView;
+	glm::mat4 lightSpaceMatrix;
+	GLfloat near_plane = 1.0f, far_plane = 7000.5f;
+	//lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
+	lightProjection = glm::perspective(45.0f, (GLfloat)SHADOW_WIDTH / (GLfloat)SHADOW_HEIGHT, near_plane, far_plane); // Note that if you use a perspective projection matrix you'll have to change the light position as the current light position isn't enough to reflect the whole scene.
+	lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(1.0));
+	lightSpaceMatrix = lightProjection * lightView;
+	// - now render scene from light's point of view
+	glUseProgram(simpleDepthShader.GetProgram());
+	glUniformMatrix4fv(glGetUniformLocation(simpleDepthShader.GetProgram(), "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
+	glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+	glClear(GL_DEPTH_BUFFER_BIT);
+	RenderScene(simpleDepthShader);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
+	// 2. Render scene as normal
+	glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	auto program = shader.GetProgram();
+	glUseProgram(program);
 
-	auto width = glutGet(GLUT_WINDOW_WIDTH);
-	auto height = glutGet(GLUT_WINDOW_HEIGHT);
-	
-	g_Camera.projectionMatrix = glm::perspectiveFov(45.f, (float)width, (float)height, 0.1f, 1000.f);
-	// rotation orbitale de la camera
+	// l'autre
+	//glm::mat4 projection = glm::perspective(camera.Zoom, (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
+	//glm::mat4 view = camera.GetViewMatrix();
+	//glUniformMatrix4fv(glGetUniformLocation(shader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+	//glUniformMatrix4fv(glGetUniformLocation(shader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
 
-	// OLD
-	//float rotY = glm::radians(g_Camera.rotation.y);
-	//g_Camera.position = glm::eulerAngleY(rotY) * glm::vec3(0.0f, 20.0f, 50.0f);
-	//g_Camera.viewMatrix = glm::lookAt(glm::vec3(g_Camera.position), glm::vec3(0.f), glm::vec3(0.f, 1.f, 0.f));
-	//g_Camera.viewMatrix = glm::translate(g_Camera.viewMatrix, g_Camera.translation);
+	// le notre
+	//g_Camera.projectionMatrix = glm::perspectiveFov(45.f, (float) glutGet(GLUT_WINDOW_WIDTH), (float) glutGet(GLUT_WINDOW_HEIGHT), 0.1f, 1000.f);
+	//glm::vec3 position = g_Camera.position;
+	//glm::vec3 direction = g_Camera.forward;
+	//g_Camera.viewMatrix = glm::lookAt(position, position + direction, glm::vec3(0.f, 1.f, 0.f));
+	//glBindBuffer(GL_UNIFORM_BUFFER, g_Camera.UBO);
+	//glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4) * 2, glm::value_ptr(g_Camera.viewMatrix), GL_STREAM_DRAW);
 
-	// NEW
-	g_Camera.projectionMatrix = glm::perspectiveFov(45.f, (float) width, (float) height, 0.1f, 1000.f);
+	// Le merge
+	g_Camera.projectionMatrix = glm::perspectiveFov(45.f, (float) glutGet(GLUT_WINDOW_WIDTH), (float) glutGet(GLUT_WINDOW_HEIGHT), 0.1f, 1000.f);
 	glm::vec3 position = g_Camera.position;
 	glm::vec3 direction = g_Camera.forward;
 	g_Camera.viewMatrix = glm::lookAt(position, position + direction, glm::vec3(0.f, 1.f, 0.f));
+	glUniformMatrix4fv(glGetUniformLocation(program, "projection"), 1, GL_FALSE, glm::value_ptr(g_Camera.projectionMatrix));
+	glUniformMatrix4fv(glGetUniformLocation(program, "view"), 1, GL_FALSE, glm::value_ptr(g_Camera.viewMatrix));
 
-	// IL FAUT TRANSFERER LES MATRICES VIEW ET PROJ AU SHADER
-	glBindBuffer(GL_UNIFORM_BUFFER, g_Camera.UBO);
-	glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4) * 2, glm::value_ptr(g_Camera.viewMatrix), GL_STREAM_DRAW);
-	//glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4) * 2, glm::value_ptr(g_Camera.viewMatrix));
+	// Set light uniforms
+	glUniform3fv(glGetUniformLocation(program, "lightPos"), 1, &lightPos[0]);
+	glUniform3fv(glGetUniformLocation(program, "viewPos"), 1, &g_Camera.position[0]);
+	glUniformMatrix4fv(glGetUniformLocation(program, "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
+	// Enable/Disable shadows by pressing 'SPACE'
+	glUniform1i(glGetUniformLocation(program, "shadows"), true);
 
+	// L'autre
+	//glActiveTexture(GL_TEXTURE0);
+	//glBindTexture(GL_TEXTURE_2D, woodTexture);
+	//glActiveTexture(GL_TEXTURE1);
+	//glBindTexture(GL_TEXTURE_2D, depthMap);
+
+	// Le notre (on active/bind d'abord la depthMap, puis on réactive/bind la texture 0 pour chaque objet (vu qu'on a pas les mêmes textures)
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, depthMap);
+	glActiveTexture(GL_TEXTURE0);
+	// 
+
+	RenderScene(shader);
+
+	
+	// 3. DEBUG: visualize depth map by rendering it to plane
+	glUseProgram(debugDepthQuad.GetProgram());
+	glUniform1f(glGetUniformLocation(debugDepthQuad.GetProgram(), "near_plane"), near_plane);
+	glUniform1f(glGetUniformLocation(debugDepthQuad.GetProgram(), "far_plane"), far_plane);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, depthMap);
+	//RenderQuad(); // uncomment this line to see depth map
+	
+
+	////////////////////////////////////////////////////////// SKYBOX
 	glUseProgram(CubeMap.GetShader());
 
 	glBindTexture(GL_TEXTURE_CUBE_MAP, CubeMap.textureID);
@@ -392,53 +501,35 @@ void Render()
 	glBindVertexArray(0);
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-	/////////////////// AFFICHAGE DES OBJETS ///////////////////////////
-	sphere.DisplayObj(glm::vec3(0.f, 0.f, 0.f));
-	character.DisplayObj(glm::vec3(0.f, 0.f, 0.f));
-	character.DisplayObj(glm::vec3(10.f, 0.f, -128.f));
-	
-
-
-
-	///////////////////////////RENDER MUR///////////////////
-
-	// rendu des murs
-	
-	glBindVertexArray(g_WallMesh.VAO);
-	 program = Scene.GetShader();
-	/*if (g_EnableDeferred)
-	{
-		program = g_EnablePositionTexture ? g_GBufferFatShader.GetProgram() : g_GBufferShader.GetProgram();
-
-	}
-	else if (g_EnableMultipass) {
-		program = shaderClasses[MULTIPASS]->GetProgram();
-	}*/
-
-	glUseProgram(program);
-	auto worldLocation = glGetUniformLocation(program, "u_worldMatrix");
-	glm::mat4& transform = g_Walls.worldMatrix;
-	glUniformMatrix4fv(worldLocation, 1, GL_FALSE, glm::value_ptr(transform));
-
-	//auto numLightsLocation = glGetUniformLocation(program, "u_numLights");
-	//glUniform1i(numLightsLocation, g_NumPointLights);
-
-	 startIndex = 6;
-	glBindTexture(GL_TEXTURE_2D, g_Walls.textures[Walls::gWallTexture]);
-	glDrawArrays(GL_TRIANGLES, startIndex, 6 * 3);
-	startIndex += 6 * 3;	// 4 murs
-	glBindTexture(GL_TEXTURE_2D, g_Walls.textures[Walls::gCeilingTexture]);
-	glDrawArrays(GL_TRIANGLES, startIndex, 6);
-	startIndex += 6;	// plafond
-	glBindTexture(GL_TEXTURE_2D, g_Walls.textures[Walls::gFloorTexture]);
-	glDrawArrays(GL_TRIANGLES, startIndex, 6); 
-	startIndex += 6;	// sol
-
-	///////////////////////////////////
+	////////////////////////////////////////////////////////// SKYBOX
 
 	glutSwapBuffers();
 	glutPostRedisplay();
+}
+
+void RenderScene(EsgiShader &shader) 
+{
+	/////////////////// AFFICHAGE DES OBJETS ///////////////////////////
+	rock.DisplayObjShadowMap(glm::vec3(lightPos), shader);
+	bear.DisplayObjShadowMap(glm::vec3(0.f, 0.f, 0.f), shader);
+	bear.DisplayObjShadowMap(glm::vec3(10.f, 0.f, -128.f), shader);
+	///////////////////////////RENDER MUR///////////////////
+
+	glBindVertexArray(g_WallMesh.VAO);
+	auto worldLocation = glGetUniformLocation(shader.GetProgram(), "model");
+	glm::mat4& transform = g_Walls.worldMatrix;
+	glUniformMatrix4fv(worldLocation, 1, GL_FALSE, glm::value_ptr(transform));
+
+	auto startIndex = 6;
+	glBindTexture(GL_TEXTURE_2D, g_Walls.textures[Walls::gWallTexture]);
+	glDrawArrays(GL_TRIANGLES, startIndex, 6 * 3);
+	startIndex += 6 * 3;																// 4 murs
+	glBindTexture(GL_TEXTURE_2D, g_Walls.textures[Walls::gCeilingTexture]);
+	glDrawArrays(GL_TRIANGLES, startIndex, 6);
+	startIndex += 6;																	// plafond
+	glBindTexture(GL_TEXTURE_2D, g_Walls.textures[Walls::gFloorTexture]);
+	glDrawArrays(GL_TRIANGLES, startIndex, 6);
+	startIndex += 6;																	// sol
 }
 
 ////////////////////////////////////////////////////////////////////////////////// InitializeLogic ///////////////////////////////////////////////////////////////////
@@ -490,6 +581,28 @@ void Update() {
 		g_Camera.position.y -= elapsedTime * movementSpeed;
 	}
 
+	//
+	if(keyState['t'] == GLUT_DOWN) {
+		lightPos += glm::vec3(g_Camera.forward.x, 0, g_Camera.forward.z);
+	}
+	else if(keyState['g'] == GLUT_DOWN) {
+		lightPos -= glm::vec3(g_Camera.forward.x, 0, g_Camera.forward.z);
+	}
+
+	if(keyState['f'] == GLUT_DOWN) {
+		lightPos -= glm::vec3(g_Camera.right.x, 0, g_Camera.right.z);
+	}
+	else if(keyState['h'] == GLUT_DOWN) {
+		lightPos += glm::vec3(g_Camera.right.x, 0, g_Camera.right.z);
+	}
+
+	if(keyState['r'] == GLUT_DOWN) {
+		lightPos.y -= 1 ;
+	}
+	else if(keyState['y'] == GLUT_DOWN) {
+		lightPos.y += 1 ;
+	}
+
 	if(keyState[27] == GLUT_DOWN) {
 		exit(0);
 	}
@@ -503,6 +616,7 @@ void Update() {
 
 		}
 	}
+
 	glutPostRedisplay();
 }
 
@@ -510,47 +624,47 @@ void Update() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void Mouse(int button, int state, int x, int y) {
 	mouseButtonsState[button] = state;
-		if(state == GLUT_DOWN) {
-			oldX = x;
-			oldY = y;
-		}
+	if(state == GLUT_DOWN) {
+		oldX = x;
+		oldY = y;
+	}
 	glutPostRedisplay();
 }
 
 ////////////////////////////////////////////////////////////////////////////////// Motion ///////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void Motion(int x, int y) {
-		auto deltaX = oldX - x;
-		auto deltaY = oldY - y;
+	auto deltaX = oldX - x;
+	auto deltaY = oldY - y;
 
-		if(mouseButtonsState[GLUT_RIGHT_BUTTON] == GLUT_DOWN) {
-			horizontalAngleCamera += mouseSpeedCamera * deltaX;
-			verticalAngleCamera += mouseSpeedCamera * deltaY;
+	if(mouseButtonsState[GLUT_RIGHT_BUTTON] == GLUT_DOWN) {
+		horizontalAngleCamera += mouseSpeedCamera * deltaX;
+		verticalAngleCamera += mouseSpeedCamera * deltaY;
 
-			// Vecteur avant
-			glm::vec3 forward = glm::vec3(
-				cos(verticalAngleCamera) * sin(horizontalAngleCamera),
-				sin(verticalAngleCamera),
-				cos(verticalAngleCamera) * cos(horizontalAngleCamera)
-				);
+		// Vecteur avant
+		glm::vec3 forward = glm::vec3(
+			cos(verticalAngleCamera) * sin(horizontalAngleCamera),
+			sin(verticalAngleCamera),
+			cos(verticalAngleCamera) * cos(horizontalAngleCamera)
+			);
 
-			// Vecteur droite
-			glm::vec3 right = glm::vec3(
-				sin(horizontalAngleCamera - M_PI / 2.0f),
-				0,
-				cos(horizontalAngleCamera - M_PI / 2.0f)
-				);
+		// Vecteur droite
+		glm::vec3 right = glm::vec3(
+			sin(horizontalAngleCamera - M_PI / 2.0f),
+			0,
+			cos(horizontalAngleCamera - M_PI / 2.0f)
+			);
 
-			// Vecteur haut
-			glm::vec3 up = glm::cross(g_Camera.forward, g_Camera.right);
+		// Vecteur haut
+		glm::vec3 up = glm::cross(g_Camera.forward, g_Camera.right);
 
-			g_Camera.forward = forward;
-			g_Camera.right = right;
-			//g_Camera.rotationMatrix = rotation.toRotationMatrix();
-		}
+		g_Camera.forward = forward;
+		g_Camera.right = right;
+		//g_Camera.rotationMatrix = rotation.toRotationMatrix();
+	}
 
-		oldX = x;
-		oldY = y;
+	oldX = x;
+	oldY = y;
 
 	glutPostRedisplay();
 }
@@ -565,4 +679,111 @@ void Keyboard(unsigned char key, int x, int y) {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void KeyboardUp(unsigned char key, int x, int y) {
 	keyState[key] = GLUT_UP;
+}
+
+
+
+
+
+
+
+
+
+
+
+/* OLD RENDER */
+
+void RenderOld() {
+
+
+	glViewport(0, 0, glutGet(GLUT_WINDOW_WIDTH), glutGet(GLUT_WINDOW_HEIGHT));
+	glClearColor(1.f, 0.0f, 0.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	auto width = glutGet(GLUT_WINDOW_WIDTH);
+	auto height = glutGet(GLUT_WINDOW_HEIGHT);
+
+	g_Camera.projectionMatrix = glm::perspectiveFov(45.f, (float) width, (float) height, 0.1f, 1000.f);
+
+	g_Camera.projectionMatrix = glm::perspectiveFov(45.f, (float) width, (float) height, 0.1f, 1000.f);
+	glm::vec3 position = g_Camera.position;
+	glm::vec3 direction = g_Camera.forward;
+	g_Camera.viewMatrix = glm::lookAt(position, position + direction, glm::vec3(0.f, 1.f, 0.f));
+
+	// IL FAUT TRANSFERER LES MATRICES VIEW ET PROJ AU SHADER
+	glBindBuffer(GL_UNIFORM_BUFFER, g_Camera.UBO);
+	glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4) * 2, glm::value_ptr(g_Camera.viewMatrix), GL_STREAM_DRAW);
+	//glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4) * 2, glm::value_ptr(g_Camera.viewMatrix));
+
+	glUseProgram(CubeMap.GetShader());
+
+	glBindTexture(GL_TEXTURE_CUBE_MAP, CubeMap.textureID);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glBindVertexArray(CubeMap.VAO);
+
+	// Tres important ! D'une part, comme la cubemap represente un environnement distant
+	// il n'est pas utile d'ecrire dans le depth buffer (on est toujours au plus loin)
+	// cependant il faut quand effectuer le test de profondeur (donc on n'a pas glDisable(GL_DEPTH_TEST)).
+	// Neamoins il faut legerement changer l'operateur du test dans le cas ou 
+	glDepthMask(GL_FALSE);
+	glDepthFunc(GL_LEQUAL);
+	glDrawArrays(GL_TRIANGLES, 0, 8 * 2 * 3);
+
+	// On reset les machins
+	glDepthMask(GL_TRUE);
+	glDepthFunc(GL_LESS);
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+	glBindVertexArray(0);
+
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+	/////////////////// AFFICHAGE DES OBJETS ///////////////////////////
+	rock.DisplayObj(glm::vec3(0.f, 0.f, 0.f));
+	bear.DisplayObj(glm::vec3(0.f, 0.f, 0.f));
+	bear.DisplayObj(glm::vec3(10.f, 0.f, -128.f));
+
+
+
+
+	///////////////////////////RENDER MUR///////////////////
+
+	// rendu des murs
+
+	glBindVertexArray(g_WallMesh.VAO);
+	auto program = scene.GetShader();
+	/*if (g_EnableDeferred)
+	{
+	program = g_EnablePositionTexture ? g_GBufferFatShader.GetProgram() : g_GBufferShader.GetProgram();
+
+	}
+	else if (g_EnableMultipass) {
+	program = shaderClasses[MULTIPASS]->GetProgram();
+	}*/
+
+	glUseProgram(program);
+	auto worldLocation = glGetUniformLocation(program, "u_worldMatrix");
+	glm::mat4& transform = g_Walls.worldMatrix;
+	glUniformMatrix4fv(worldLocation, 1, GL_FALSE, glm::value_ptr(transform));
+
+	//auto numLightsLocation = glGetUniformLocation(program, "u_numLights");
+	//glUniform1i(numLightsLocation, g_NumPointLights);
+
+	auto startIndex = 6;
+	glBindTexture(GL_TEXTURE_2D, g_Walls.textures[Walls::gWallTexture]);
+	glDrawArrays(GL_TRIANGLES, startIndex, 6 * 3);
+	startIndex += 6 * 3;	// 4 murs
+	glBindTexture(GL_TEXTURE_2D, g_Walls.textures[Walls::gCeilingTexture]);
+	glDrawArrays(GL_TRIANGLES, startIndex, 6);
+	startIndex += 6;	// plafond
+	glBindTexture(GL_TEXTURE_2D, g_Walls.textures[Walls::gFloorTexture]);
+	glDrawArrays(GL_TRIANGLES, startIndex, 6);
+	startIndex += 6;	// sol
+
+						///////////////////////////////////
+
+	glutSwapBuffers();
+	glutPostRedisplay();
 }

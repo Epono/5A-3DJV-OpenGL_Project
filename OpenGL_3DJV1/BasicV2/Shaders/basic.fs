@@ -1,17 +1,22 @@
+ #version 330
 
-#version 150
+ // Direction VERS la source lumineuse exprimee dans le repere WORLD
+const vec3 L = vec3(0.0, 0.0, 1.0);
 
-//in vec3 color;
-in vec2 UV;
+in vec3 v_normal;
 
-out vec4 out_color;
+uniform sampler2D u_texture;
+in vec2 v_textureCoord;
 
-uniform sampler2D myTextureSampler;
+out vec4 Fragment;
 
 void main(void)
 {
-  	//out_Color = vec4(color, 1.0);
-	out_color = texture(myTextureSampler,UV);
-	//out_color = vec4(color,1.0);
+    vec4 textureColor = texture(u_texture, v_textureCoord);
 
+	// calcul du cosinus de l'angle entre les deux vecteurs
+	float NdotL = max(dot(normalize(v_normal), L), 0.0);
+	// Equation de Lambert : Intensite Reflechie = Intensite Incidente * N.L
+    Fragment = textureColor * NdotL;
+    
 }

@@ -24,9 +24,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="ReadMe.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="..\common\EsgiShader.cpp">
       <Filter>Source Files\common</Filter>
     </ClCompile>
@@ -71,31 +68,5 @@
     <ClInclude Include="Headers\SceneArea.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="basic.fs">
-      <Filter>Source Files\shaders</Filter>
-    </None>
-    <None Include="basic.vs">
-      <Filter>Source Files\shaders</Filter>
-    </None>
-    <None Include="basico.fs">
-      <Filter>Source Files\shaders</Filter>
-    </None>
-    <None Include="basico.vs">
-      <Filter>Source Files\shaders</Filter>
-    </None>
-    <None Include="yolo.fs">
-      <Filter>Source Files\shaders</Filter>
-    </None>
-    <None Include="yolo.vs">
-      <Filter>Source Files\shaders</Filter>
-    </None>
-    <None Include="skybox.fs">
-      <Filter>Source Files\shaders</Filter>
-    </None>
-    <None Include="skybox.vs">
-      <Filter>Source Files\shaders</Filter>
-    </None>
   </ItemGroup>
 </Project>
