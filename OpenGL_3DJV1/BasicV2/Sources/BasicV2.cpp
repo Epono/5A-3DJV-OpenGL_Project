@@ -121,7 +121,7 @@ int main(int argc, char* argv[]) {
 	InitializeLogic();
 
 	glutIdleFunc(Update);
-	glutDisplayFunc(RenderOld);
+	glutDisplayFunc(Render);
 
 	glutMouseFunc(Mouse);
 	glutMotionFunc(Motion);
@@ -397,18 +397,18 @@ void RenderQuad() {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void Render() {
 
-
 	// 1. Render depth of scene to texture (from light's perspective)
 	// - Get light projection/view matrix.
 	glm::mat4 lightProjection, lightView;
 	glm::mat4 lightSpaceMatrix;
-	GLfloat near_plane = 1.0f, far_plane = 7000.5f;
-	//lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
-	lightProjection = glm::perspective(45.0f, (GLfloat)SHADOW_WIDTH / (GLfloat)SHADOW_HEIGHT, near_plane, far_plane); // Note that if you use a perspective projection matrix you'll have to change the light position as the current light position isn't enough to reflect the whole scene.
-	lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(1.0));
+	GLfloat near_plane = 1.0f, far_plane = 2000.5f;
+	//lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 100.0f, near_plane, far_plane);
+	lightProjection = glm::perspective(60.f, (GLfloat)SHADOW_WIDTH / (GLfloat)SHADOW_HEIGHT, near_plane, far_plane); // Note that if you use a perspective projection matrix you'll have to change the light position as the current light position isn't enough to reflect the whole scene.
+	lightView = glm::lookAt(lightPos, glm::vec3(0.0f, -100.0f, 0.0f), glm::vec3(1.0, 1.0, 1.0));
 	lightSpaceMatrix = lightProjection * lightView;
 	// - now render scene from light's point of view
 	glUseProgram(simpleDepthShader.GetProgram());
+	glCullFace(GL_CW);
 	glUniformMatrix4fv(glGetUniformLocation(simpleDepthShader.GetProgram(), "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
 	glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
 	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
@@ -416,11 +416,11 @@ void Render() {
 	RenderScene(simpleDepthShader);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-
 	// 2. Render scene as normal
 	glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	auto program = shader.GetProgram();
+	glCullFace(GL_CCW);
 	glUseProgram(program);
 
 	// l'autre
