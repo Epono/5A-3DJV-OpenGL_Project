@@ -74,8 +74,8 @@ struct Sphere
 // ---
 
 #define ATTR_POSITION	0
-#define ATTR_TEXCOORDS	1
-#define ATTR_NORMAL		2
+#define ATTR_NORMAL		1
+#define ATTR_TEXCOORDS	2
 
 template<size_t N>
 void LoadMesh(Mesh& mesh, const Vertex (& vertices)[N])
@@ -97,12 +97,12 @@ void LoadMesh(Mesh& mesh, const Vertex (& vertices)[N])
 	auto offset = 3 * sizeof(float);
 	glVertexAttribPointer(ATTR_POSITION, 3, GL_FLOAT, false, stride, nullptr);
 	glEnableVertexAttribArray(ATTR_POSITION);
-	glVertexAttribPointer(ATTR_TEXCOORDS, 2, GL_FLOAT, false, stride, (GLvoid *)offset);
-	glEnableVertexAttribArray(ATTR_TEXCOORDS);
-	offset += 2 * sizeof(float);	
 	glVertexAttribPointer(ATTR_NORMAL, 3, GL_FLOAT, false, stride, (GLvoid *)offset);
 	glEnableVertexAttribArray(ATTR_NORMAL);
 	offset += 3 * sizeof(float);
+	glVertexAttribPointer(ATTR_TEXCOORDS, 2, GL_FLOAT, false, stride, (GLvoid *)offset);
+	glEnableVertexAttribArray(ATTR_TEXCOORDS);
+	offset += 2 * sizeof(float);	
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }

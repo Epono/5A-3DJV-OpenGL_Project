@@ -97,9 +97,9 @@ EsgiShader simpleDepthShader;
 EsgiShader debugDepthQuad;
 
 // Light source
-glm::vec3 lightPos(0.0f, 0.0f, 0.0f);
+glm::vec3 lightPos(0.0f, 10.0f, 0.0f);
 
-const GLuint SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+const GLuint SHADOW_WIDTH = 2048, SHADOW_HEIGHT = 2048;
 GLuint depthMapFBO;
 GLuint depthMap;
 ///////////////// SHADOW MAPPING ///////////////////
@@ -181,20 +181,6 @@ void InitCubemap() {
 	};
 
 	static const char* skyboxFiles[] = {
-		//"Assets/Skybox/right.jpg",
-		//"Assets/Skybox/left.jpg",
-		//"Assets/Skybox/top.jpg",
-		//"Assets/Skybox/bottom.jpg",
-		//"Assets/Skybox/back.jpg",
-		//"Assets/Skybox/front.jpg",
-
-		//"Assets/Skybox/Powerlines/posx.jpg",
-		//"Assets/Skybox/Powerlines/negx.jpg",
-		//"Assets/Skybox/Powerlines/posy.jpg",
-		//"Assets/Skybox/Powerlines/negy.jpg",
-		//"Assets/Skybox/Powerlines/posz.jpg",
-		//"Assets/Skybox/Powerlines/negz.jpg",
-
 		"Assets/Skybox/Park3/posx.jpg",
 		"Assets/Skybox/Park3/negx.jpg",
 		"Assets/Skybox/Park3/posy.jpg",
@@ -259,7 +245,6 @@ void InitializeOpenGL() {
 	glBufferData(GL_UNIFORM_BUFFER, sizeof(Material), &g_ShinyMaterial, GL_STATIC_DRAW);
 
 	LoadMesh(g_WallMesh, g_Room);
-
 
 	LoadAndCreateTextureRGBA("Assets/Textures/parquet22.jpg", g_Walls.textures[Walls::gWallTexture]);
 	glBindTexture(GL_TEXTURE_2D, g_Walls.textures[Walls::gWallTexture]);
@@ -353,6 +338,8 @@ void InitializeOpenGL() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 	GLfloat borderColor[] = {1.0, 1.0, 1.0, 1.0};
 	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 
@@ -365,51 +352,21 @@ void InitializeOpenGL() {
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 }
 
-// RenderQuad() Renders a 1x1 quad in NDC, best used for framebuffer color targets
-// and post-processing effects.
-GLuint quadVAO = 0;
-GLuint quadVBO;
-void RenderQuad() {
-	if(quadVAO == 0) {
-		GLfloat quadVertices[] = {
-			// Positions        // Texture Coords
-			-1.0f,  1.0f, 0.0f,  0.0f, 1.0f,
-			-1.0f, -1.0f, 0.0f,  0.0f, 0.0f,
-			1.0f,  1.0f, 0.0f,  1.0f, 1.0f,
-			1.0f, -1.0f, 0.0f,  1.0f, 0.0f,
-		};
-		// Setup plane VAO
-		glGenVertexArrays(1, &quadVAO);
-		glGenBuffers(1, &quadVBO);
-		glBindVertexArray(quadVAO);
-		glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*) 0);
-		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*) (3 * sizeof(GLfloat)));
-	}
-	glBindVertexArray(quadVAO);
-	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-	glBindVertexArray(0);
-}
 ////////////////////////////////////////////////////////////////////////////////// Render ///////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void Render() {
-
 	// 1. Render depth of scene to texture (from light's perspective)
-	// - Get light projection/view matrix.
 	glm::mat4 lightProjection, lightView;
 	glm::mat4 lightSpaceMatrix;
-	GLfloat near_plane = 1.0f, far_plane = 2000.5f;
-	//lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 100.0f, near_plane, far_plane);
-	lightProjection = glm::perspective(60.f, (GLfloat)SHADOW_WIDTH / (GLfloat)SHADOW_HEIGHT, near_plane, far_plane); // Note that if you use a perspective projection matrix you'll have to change the light position as the current light position isn't enough to reflect the whole scene.
-	lightView = glm::lookAt(lightPos, glm::vec3(0.0f, -100.0f, 0.0f), glm::vec3(1.0, 1.0, 1.0));
+	GLfloat near_plane = 1.0f, far_plane = 2000.0f;
+	lightProjection = glm::perspective(60.f, (GLfloat)SHADOW_WIDTH / (GLfloat)SHADOW_HEIGHT, near_plane, far_plane);
+	lightView = glm::lookAt(lightPos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f));
 	lightSpaceMatrix = lightProjection * lightView;
 	// - now render scene from light's point of view
-	glUseProgram(simpleDepthShader.GetProgram());
+	auto program = simpleDepthShader.GetProgram();
+	glUseProgram(program);
 	glCullFace(GL_CW);
-	glUniformMatrix4fv(glGetUniformLocation(simpleDepthShader.GetProgram(), "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
+	glUniformMatrix4fv(glGetUniformLocation(program, "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
 	glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
 	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
 	glClear(GL_DEPTH_BUFFER_BIT);
@@ -419,7 +376,7 @@ void Render() {
 	// 2. Render scene as normal
 	glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	auto program = shader.GetProgram();
+	program = shader.GetProgram();
 	glCullFace(GL_CCW);
 	glUseProgram(program);
 
@@ -438,7 +395,7 @@ void Render() {
 	//glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4) * 2, glm::value_ptr(g_Camera.viewMatrix), GL_STREAM_DRAW);
 
 	// Le merge
-	g_Camera.projectionMatrix = glm::perspectiveFov(45.f, (float) glutGet(GLUT_WINDOW_WIDTH), (float) glutGet(GLUT_WINDOW_HEIGHT), 0.1f, 1000.f);
+	g_Camera.projectionMatrix = glm::perspectiveFov(45.f, (float) glutGet(GLUT_WINDOW_WIDTH), (float) glutGet(GLUT_WINDOW_HEIGHT), 0.1f, 500.f);
 	glm::vec3 position = g_Camera.position;
 	glm::vec3 direction = g_Camera.forward;
 	g_Camera.viewMatrix = glm::lookAt(position, position + direction, glm::vec3(0.f, 1.f, 0.f));
@@ -465,16 +422,6 @@ void Render() {
 	// 
 
 	RenderScene(shader);
-
-	
-	// 3. DEBUG: visualize depth map by rendering it to plane
-	glUseProgram(debugDepthQuad.GetProgram());
-	glUniform1f(glGetUniformLocation(debugDepthQuad.GetProgram(), "near_plane"), near_plane);
-	glUniform1f(glGetUniformLocation(debugDepthQuad.GetProgram(), "far_plane"), far_plane);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, depthMap);
-	//RenderQuad(); // uncomment this line to see depth map
-	
 
 	////////////////////////////////////////////////////////// SKYBOX
 	glUseProgram(CubeMap.GetShader());
@@ -513,6 +460,8 @@ void RenderScene(EsgiShader &shader)
 	rock.DisplayObjShadowMap(glm::vec3(lightPos), shader);
 	bear.DisplayObjShadowMap(glm::vec3(0.f, 0.f, 0.f), shader);
 	bear.DisplayObjShadowMap(glm::vec3(10.f, 0.f, -128.f), shader);
+
+
 	///////////////////////////RENDER MUR///////////////////
 
 	glBindVertexArray(g_WallMesh.VAO);
@@ -530,6 +479,8 @@ void RenderScene(EsgiShader &shader)
 	glBindTexture(GL_TEXTURE_2D, g_Walls.textures[Walls::gFloorTexture]);
 	glDrawArrays(GL_TRIANGLES, startIndex, 6);
 	startIndex += 6;																	// sol
+
+	///////////////////////////RENDER MUR///////////////////
 }
 
 ////////////////////////////////////////////////////////////////////////////////// InitializeLogic ///////////////////////////////////////////////////////////////////
