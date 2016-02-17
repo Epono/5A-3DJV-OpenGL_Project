@@ -88,6 +88,7 @@ struct ViewProj {
 	// Vecteurs orientation de la caméra
 	glm::vec3 forward;
 	glm::vec3 right;
+	glm::vec3 up;
 } g_Camera;
 ///////////////// STRUCTURE CAMERA ///////////////////
 
@@ -360,7 +361,7 @@ void Render() {
 	glm::mat4 lightSpaceMatrix;
 	GLfloat near_plane = 1.0f, far_plane = 2000.0f;
 	lightProjection = glm::perspective(60.f, (GLfloat)SHADOW_WIDTH / (GLfloat)SHADOW_HEIGHT, near_plane, far_plane);
-	lightView = glm::lookAt(lightPos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f));
+	lightView = glm::lookAt(lightPos, glm::vec3(0.0f, 0.0f, 0.0f), g_Camera.up);
 	lightSpaceMatrix = lightProjection * lightView;
 	// - now render scene from light's point of view
 	auto program = simpleDepthShader.GetProgram();
@@ -611,6 +612,7 @@ void Motion(int x, int y) {
 
 		g_Camera.forward = forward;
 		g_Camera.right = right;
+		g_Camera.up = up;
 		//g_Camera.rotationMatrix = rotation.toRotationMatrix();
 	}
 
