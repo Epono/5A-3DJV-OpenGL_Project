@@ -353,6 +353,13 @@ void InitializeOpenGL() {
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 }
 
+void SetDirLight(EsgiShader& shader, glm::vec3 direction, glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular) {
+	glUseProgram(shader.GetProgram());
+	glUniform3fv(glGetUniformLocation(shader.GetProgram(), "dirLight.direction"), 1, glm::value_ptr(direction));
+	glUniform3fv(glGetUniformLocation(shader.GetProgram(), "dirLight.ambient"), 1, glm::value_ptr(ambient));
+	glUniform3fv(glGetUniformLocation(shader.GetProgram(), "dirLight.diffuse"), 1, glm::value_ptr(diffuse));
+	glUniform3fv(glGetUniformLocation(shader.GetProgram(), "dirLight.specular"), 1, glm::value_ptr(specular));
+}
 ////////////////////////////////////////////////////////////////////////////////// Render ///////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void Render() {
@@ -361,7 +368,8 @@ void Render() {
 	glm::mat4 lightSpaceMatrix;
 	GLfloat near_plane = 1.0f, far_plane = 2000.0f;
 	lightProjection = glm::perspective(60.f, (GLfloat)SHADOW_WIDTH / (GLfloat)SHADOW_HEIGHT, near_plane, far_plane);
-	lightView = glm::lookAt(lightPos, glm::vec3(0.0f, 0.0f, 0.0f), g_Camera.up);
+	//lightProjection = glm::ortho(-100.0f, 100.0f, -100.0f, 100.0f, near_plane, far_plane);
+	lightView = glm::lookAt(lightPos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f));
 	lightSpaceMatrix = lightProjection * lightView;
 	// - now render scene from light's point of view
 	auto program = simpleDepthShader.GetProgram();
@@ -407,8 +415,9 @@ void Render() {
 	glUniform3fv(glGetUniformLocation(program, "lightPos"), 1, &lightPos[0]);
 	glUniform3fv(glGetUniformLocation(program, "viewPos"), 1, &g_Camera.position[0]);
 	glUniformMatrix4fv(glGetUniformLocation(program, "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightSpaceMatrix));
-	// Enable/Disable shadows by pressing 'SPACE'
 	glUniform1i(glGetUniformLocation(program, "shadows"), true);
+
+	//SetDirLight(shader, glm::vec3(1.0f, -1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(0.8f, 0.8f, 0.8f));
 
 	// L'autre
 	//glActiveTexture(GL_TEXTURE0);
